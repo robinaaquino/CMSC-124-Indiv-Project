@@ -12,8 +12,12 @@ identifierRegex = "[A-Za-z]+[A-Za-z0-9_]*\s"
 
 yarnLiteral = "\".*\"\s"
 
+#next step, catch all tokens split by spaces and newlines
+
 def PrintLexemeList(lexemeList):
-    for lexeme in lexemeList:
+    for counter in range(len(lexemeList)):
+        lexeme = lexemeList[counter]
+        print("\nCount: ", counter)
         print("String: ", lexeme.string)
         print("Classification: ", lexeme.classification)
         print("Line Number: ", lexeme.lineNumber)
@@ -31,6 +35,7 @@ def ReturnListOfLexemes(textString):
         identifierMatch = re.match(identifierRegex, textString)
         if(identifierMatch):
             textString = textString.replace(identifierMatch.group(), "")
+            print("identifier match:", textString, ":")
             identifierLexeme = Lexeme(identifierMatch.group(), "Identifier", lineNumber)
             listOfLexemes.append(identifierLexeme)
             continue
@@ -45,9 +50,9 @@ def ReturnListOfLexemes(textString):
 
         print(textString)
         break
-    print("\nAll lexemes:\n")
-    print(listOfLexemes)
+    
 
 fileName = "C:\\Users\\Arthur Aquino\\Documents\\School Documents\\2S A.Y. 2021-2022\\CMSC 124 Project JUST DO IT BY MARCH DAMIT\\a.lol"
 file = open(fileName, "r")
 ReturnListOfLexemes(file.read())
+# PrintLexemeList(listOfLexemes)
