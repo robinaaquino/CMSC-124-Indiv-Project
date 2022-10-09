@@ -1,90 +1,177 @@
-from asyncio.windows_events import NULL
-from gettext import NullTranslations
+# Robina Rhamz M. Aquino
+# CMSC 124 <section>
+#
+# This program is an individual implementation of the LOL interpreter
+
+# Code Conventions
+#Functions in snake_case
+#Variables in camelCase
+# Global variables in PascalCase
+# Constant variables in ALLCAPS
+
 from tkinter import *
+from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
-
 from lex import *
 
-#key binds
-#alt + k + 0 collapse
-#alt + k + j expand
+N = 1
 
-#bookmarks
-#cltr + alt + k bookmark
-#ctrl + alt + l next
-#ctrl + alt + j prev
+# TODO
+# Switch from pack to grid
 
+# key binds
+# alt + k + 0 collapse
+# alt + k + j expand
+
+# bookmarks
+# cltr + alt + k bookmark
+# ctrl + alt + l next
+# ctrl + alt + j prev
 
 #global variables
-currently_accessed_file = NULL #file opened by user
+CurrentlyAccessedFile = ''  # file opened by user
 
-#functions
+# functions
 
-#ui functions
-def load_text(): #function used to load a text
-    global currently_accessed_file 
-    file_name = filedialog.askopenfilename(initialdir="C:/Users/Harlight/Documents",filetypes=[("LOL files", "*.lol*"), ("asda", "*.txt")])
-    
-    if file_name: #if user selected a file
+# ui functions
+
+# Function that is used to load a text file
+# Accepts no arguments
+# Sets the CurrentlyAccessedFile variable
+
+
+def load_text():  # function used to load a text
+    global CurrentlyAccessedFile  # access the global variable
+    fileName = filedialog.askopenfilename(initialdir="C:/Users/Harlight/Documents", filetypes=[
+                                          ("LOL files", "*.lol*"), ("asda", "*.txt")])  # open file dialog to select a file
+
+    if fileName:  # if user selected a file
         try:
-            file_directory.set(file_name) #set the file directory shown in the ui
-            currently_accessed_file = file_name #set the file_name to the global variable
+            # set the file directory shown in the ui
+            FileDirectory.set(fileName)
+            CurrentlyAccessedFile = fileName  # set the fileName to the global variable
 
-            file_data = open(file_name, "r") #read the file
-            file_contents = file_data.read()
+            fileData = open(fileName, "r")  # open the file in read mode
+            file_contents = fileData.read()  # read the file
 
-            text_area.delete("1.0", "end") #delete the contents of the text area, if any
-            text_area.insert(END, file_contents) #insert the contents of the file to the text area
-            file_data.close() #close the file
+            # delete the contents of the text area, if any
+            TextArea.delete("1.0", "end")
+            # insert the contents of the file to the text area
+            TextArea.insert(END, file_contents)
+            fileData.close()  # close the file
         except:
-            messagebox.showerror(title="Error", message="Error in selecting a file") #show an error
+            # show an error if an error occurs
+            messagebox.showerror(
+                title="Error", message="Error in selecting a file")
 
-def execute_function(): #function used to set a text
-    global currently_accessed_file #access the file
-    if currently_accessed_file:
-        print(currently_accessed_file)
-        current_text_area_contents = text_area.get("1.0", END) #get the current contents of the text area
-        file_data = open(currently_accessed_file, "w") #write to the selected text file
-        file_data.write(current_text_area_contents)
-        ReturnListOfLexemes(current_text_area_contents)
-        file_data.close()
+# Function that is called when the Execute button is clicked
+# Accepts no arguments
+# Runs different functions
+# Gets text from text area and writes to file
+# Updates lexeme table based on text from text area
+
+
+def execute_function():  # function used to set a text
+    global CurrentlyAccessedFile  # access the file
+    global ListOfLexemes
+
+    if CurrentlyAccessedFile:
+
+        # get the current contents of the text area
+        currentTextAreaContents = TextArea.get("1.0", END)
+        # write to the selected text file
+        fileData = open(CurrentlyAccessedFile, "w")
+        fileData.write(currentTextAreaContents)
+
+        fileText = currentTextAreaContents.replace(
+            "\n", " \n")  # set new lines as separate strings
+        ListOfLexemes.clear()  # clear global variable before adding more lexemes
+        return_list_of_lexemes(fileText)  # parse the file
+        fileData.close()  # close the file
+
+        for item in LexemeTableFrame.get_children():  # delete contents in table if any
+            LexemeTableFrame.delete(item)
+
+        table_row_counter = 0  # initialize identifier for table rows
+        for i in range(len(ListOfLexemes)):  # iterate over each lexeme in ListOfLexemes
+            # do not include new lines in table
+            if(ListOfLexemes[i].classification == "New Line"):
+                continue
+            LexemeTableFrame.insert(parent='', index='end', iid=table_row_counter, text='', values=(
+                ListOfLexemes[i].string, ListOfLexemes[i].lineNumber, ListOfLexemes[i].classification))  # insert each lexeme to the table
+            table_row_counter += 1  # increment identifier for table rows
+
     else:
-        messagebox.showerror(title="Error", message="No selected file") #show an error when trying to execute without a file
+        # show an error when trying to execute without a file
+        messagebox.showerror(title="Error", message="No selected file")
 
-#create main window
-main_window = Tk()
 
-main_window.title("LOL Interpreter vers. CMSC124")#create a title for the window
-main_window.geometry("800x400")
+# create main window
+MainWindow = Tk()
 
-#frames
-#text frames for file selection and text area
-text_frame = Frame(main_window)
-text_frame_upper = Frame(text_frame)
-text_frame_lower = Frame(text_frame)
-text_frame.pack()
-text_frame_upper.pack(fill=BOTH, expand=True, side=TOP)
-text_frame_lower.pack(fill=BOTH, expand=True, side=BOTTOM)
+# create a title for the window
+MainWindow.title("LOL Interpreter vers. CMSC124")
+MainWindow.geometry("800x400")
 
-#execute_frame for the button
-execute_frame = Frame(main_window)
-execute_frame.pack()
+# frames
+# text frames for file selection and text area
+TextFrame = Frame(MainWindow)
+TextFrameUpper = Frame(TextFrame)
+TextFrameLower = Frame(TextFrame)
+TextFrame.pack()
+TextFrameUpper.pack(fill=BOTH, expand=True, side=TOP)
+TextFrameLower.pack(fill=BOTH, expand=True, side=BOTTOM)
 
-#widgets for text frame
-file_directory = StringVar()
-file_directory.set('(/(=w=)?')
-file_directory_label = Label(text_frame_upper, textvariable=file_directory)
-file_directory_label.pack(side=LEFT, padx=5, pady=5)
+# ExecuteFrame for the button
+ExecuteFrame = Frame(MainWindow)
+ExecuteFrame.pack()
 
-select_file_button = Button(text_frame_upper, text="*(*w*)*", command=load_text)
-select_file_button.pack(side=RIGHT, padx=5, pady=5)
+# LexemeFrame for the lexemes and classificaiton
+LexemeFrame = Frame(MainWindow)
+LexemeFrame.pack()
+LexemeFrameYScrollbar = Scrollbar(LexemeFrame)
+LexemeFrameYScrollbar.pack(side=RIGHT, fill=Y)
 
-text_area = Text(text_frame_lower, height=5, width=52)
-text_area.pack(padx=5,pady=5)
 
-#widgets for execute frame
-execute_button = Button(execute_frame, text="\(owo)/", command=execute_function)
-execute_button.pack(padx=5,pady=5)
+# widgets for text frame
+FileDirectory = StringVar()
+FileDirectory.set('(/(=w=)?')
+FileDirectoryLabel = Label(TextFrameUpper, textvariable=FileDirectory)
+FileDirectoryLabel.pack(side=LEFT, padx=5, pady=5)
 
-main_window.mainloop()
+SelectFileButton = Button(TextFrameUpper, text="*(*w*)*", command=load_text)
+SelectFileButton.pack(side=RIGHT, padx=5, pady=5)
+
+TextArea = Text(TextFrameLower, height=5, width=52)
+TextArea.pack(padx=5, pady=5)
+
+# widgets for execute frame
+ExecuteButton = Button(ExecuteFrame, text="\(owo)/", command=execute_function)
+ExecuteButton.pack(padx=5, pady=5)
+
+# widgets for lexeme table frame
+LexemeTableFrame = ttk.Treeview(
+    LexemeFrame, yscrollcommand=LexemeFrameYScrollbar.set)
+LexemeTableFrame.pack()
+
+# set scrollbar to access y view
+LexemeFrameYScrollbar.config(command=LexemeTableFrame.yview)
+
+LexemeTableFrame['columns'] = (
+    'lexeme', 'line_number', 'classification')  # set columns
+LexemeTableFrame.column('#0', width=0, stretch=NO)
+LexemeTableFrame.column('lexeme', anchor=CENTER, width=80)
+LexemeTableFrame.column('line_number', anchor=CENTER, width=80)
+LexemeTableFrame.column('classification', anchor=CENTER, width=120)
+
+# set headings of columns
+LexemeTableFrame.heading('#0', text="Lexeme", anchor=CENTER)
+LexemeTableFrame.heading('lexeme', text="Lexeme", anchor=CENTER)
+LexemeTableFrame.heading('line_number', text="Line Number", anchor=CENTER)
+LexemeTableFrame.heading(
+    'classification', text="Classification", anchor=CENTER)
+
+LexemeTableFrame.pack()
+
+MainWindow.mainloop()
