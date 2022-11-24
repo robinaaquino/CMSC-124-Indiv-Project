@@ -1,11 +1,6 @@
-from doctest import OutputChecker
+from objectDefinition import *
+from utilityFunctions import *
 import re
-
-class Lexeme: #properties of a lexeme
-    def __init__(self, string, classification, lineNumber):
-        self.string = string #the string itself
-        self.classification = classification #what the string is
-        self.lineNumber = lineNumber #what line number it belongs to
 
 ListOfLexemes = [] #array containing all registered lexemes
 
@@ -33,7 +28,7 @@ ExpressionAndOperatorRegex = "AN\s"
 #comments
 InlineCommentDelimiterRegex = "BTW\s"
 MultiCommentDelimiterStartRegex = "OBTW\s"
-MultiCommentDelimiterEndRegex = "TLDR\s"
+MultiCommentDelimiterEndRegex = "TLDR\n"
 
 #casting
 CastingOperatorRegex = "IS NOW A\s"
@@ -74,27 +69,21 @@ IdentifierRegex = "[A-Za-z]+[A-Za-z0-9_]*\s" #regex to identify variable names
 
 #regex for literals
 NumbrLiteralRegex = "(-[1-9][0-9]*|[1-9][0-9]*|[0])\s" #regex to identify integers
-NumbarLiteralRegex = "-?[0-9]*)\.[0-9]*[1-9]\s" #regex to identify floats
+NumbarLiteralRegex = "(-?[0-9]*)\.[0-9]*[1-9]\s" #regex to identify floats
+#TODO (-?[0-9]*)\.([0-9]+)\s change to this? allow 1.0000 and 1.01000 when converted to int and float, is parsed automatically
+#if not check typecast_value
+
 TroofLiteralRegex = "(WIN|FAIL)\s" #regex for boolean values
 TypeLiteralRegex = "(NOOB|NUMBR|NUMBAR|TROOF|YARN)\s" #regex for types
 YarnLiteralRegex = "\".+\"\s" #regex to identify strings
 
 NewLineRegex = "\n" #regex to identify new line
-OtherRegex = ".*\s" #regex to identify any word that doesn't 
+OtherRegex = ".*" #regex to identify any word that doesn't 
+MultiLineCommentRegex = ".+(\s)?" #regex to identify any comment separated by whitespace
+CommentRegex = ".+" #regex to identify any comment not separated by whitespace
 
 #next step, catch all tokens split by spaces and newlines
 
-#Function that prints all lexemes in an array
-#Accepts an array of lexemes
-#Prints each lexeme
-def print_lexeme_list(lexemeList):
-    print("\n**********************\n")
-    for counter in range(len(lexemeList)): #iterate over the length of the lexeme list
-        lexeme = lexemeList[counter]
-        print("\nCount: ", counter)
-        print("String: ", lexeme.string)
-        print("Classification: ", lexeme.classification)
-        print("Line Number: ", lexeme.lineNumber)
 
 #Function that adds a new lexeme to the list of lexemes
 #Accepts regex, text string, line number and classification of lexeme
@@ -112,6 +101,8 @@ def add_new_lexeme(regex, textString, lineNumber, classification):
 #Accepts a text string
 #Sets the global variable
 def return_list_of_lexemes(textString):
+    #TODO maybe add a way to strip the lines? no, maybe just remove whitespaces at the end and start of the text yea
+
     global ListOfLexemes
 
     lineNumber = 1
@@ -186,17 +177,46 @@ def return_list_of_lexemes(textString):
             textString = add_new_lexeme(expressionAndOperatorRegexMatch, textString, lineNumber, 'Expression AND Operator')
             continue
 
+        #TODO NO HANDLER FOR COMMENTS AFTER INLINE COMMENT DELIMITER LEL
+
         #check if matched with comments
         inlineCommentDelimiterRegexMatch = re.match(InlineCommentDelimiterRegex, textString)
         if(inlineCommentDelimiterRegexMatch):
             textString = add_new_lexeme(inlineCommentDelimiterRegexMatch, textString, lineNumber, 'Inline Comment Delimiter')
+
+            while len(textString) > 0:
+                newLineRegexMatch = re.match(NewLineRegex, textString)
+                if(newLineRegexMatch):
+                    textString = add_new_lexeme(newLineRegexMatch, textString, lineNumber, 'New Line')
+                    lineNumber+=1
+                    break
+
+                CommentRegexMatch = re.match(CommentRegex, textString)
+                if(CommentRegexMatch):
+                    textString = add_new_lexeme(CommentRegexMatch, textString, lineNumber, 'Comment')
+                    continue
+
             continue
 
         multiCommentDelimiterStartRegexMatch = re.match(MultiCommentDelimiterStartRegex, textString)
         if(multiCommentDelimiterStartRegexMatch):
             textString = add_new_lexeme(multiCommentDelimiterStartRegexMatch, textString, lineNumber, 'Multi-line Comment Delimiter Start')
-            continue
 
+            # loop until there's the end delimiter
+            while len(textString) > 0:
+                multiCommentDelimiterEndRegexMatch = re.match(MultiCommentDelimiterEndRegex, textString)
+                if(multiCommentDelimiterEndRegexMatch):
+                    textString = add_new_lexeme(multiCommentDelimiterEndRegexMatch, textString, lineNumber, 'Multi-line Comment Delimiter End')
+                    break
+
+                MultiLineCommentRegexMatch = re.match(MultiLineCommentRegex, textString)
+                if(MultiLineCommentRegexMatch):
+                    textString = add_new_lexeme(MultiLineCommentRegexMatch, textString, lineNumber, 'Comment')
+                    continue
+                print(len(textString))
+                print(textString)
+            continue
+        
         multiCommentDelimiterEndRegexMatch = re.match(MultiCommentDelimiterEndRegex, textString)
         if(multiCommentDelimiterEndRegexMatch):
             textString = add_new_lexeme(multiCommentDelimiterEndRegexMatch, textString, lineNumber, 'Multi-line Comment Delimiter End')
@@ -321,16 +341,41 @@ def return_list_of_lexemes(textString):
             lineNumber+=1
             continue
 
-        #check if matched with identifiers
-        identifierRegexMatch = re.match(IdentifierRegex, textString)
-        if(identifierRegexMatch):
-            textString = add_new_lexeme(identifierRegexMatch, textString, lineNumber, 'Identifier')
+        #check if matched with numbar literal
+        NumbarLiteralRegexMatch = re.match(NumbarLiteralRegex, textString)
+        if(NumbarLiteralRegexMatch):
+            print(NumbarLiteralRegexMatch)
+            textString = add_new_lexeme(NumbarLiteralRegexMatch, textString, lineNumber, 'Numbar Literal')
             continue
 
+        #check if matched with numbar literal
+        NumbrLiteralRegexMatch = re.match(NumbrLiteralRegex, textString)
+        if(NumbrLiteralRegexMatch):
+            textString = add_new_lexeme(NumbrLiteralRegexMatch, textString, lineNumber, 'Numbr Literal')
+            continue
+        
         #check if matched with yarn literal
         yarnLiteralRegexMatch = re.match(YarnLiteralRegex, textString)
         if(yarnLiteralRegexMatch):
             textString = add_new_lexeme(yarnLiteralRegexMatch, textString, lineNumber, 'Yarn Literal')
+            continue
+
+        #check if matched with troof literal
+        troofLiteralRegexMatch = re.match(TroofLiteralRegex, textString)
+        if(troofLiteralRegexMatch):
+            textString = add_new_lexeme(troofLiteralRegexMatch, textString, lineNumber, 'Troof Literal')
+            continue
+
+        #check if matched with type literal
+        typeLiteralRegexMatch = re.match(TypeLiteralRegex, textString)
+        if(typeLiteralRegexMatch):
+            textString = add_new_lexeme(typeLiteralRegexMatch, textString, lineNumber, 'Type Literal')
+            continue
+
+        #check if matched with identifiers
+        identifierRegexMatch = re.match(IdentifierRegex, textString)
+        if(identifierRegexMatch):
+            textString = add_new_lexeme(identifierRegexMatch, textString, lineNumber, 'Identifier')
             continue
 
         #check if matched with anything else
@@ -343,14 +388,14 @@ def return_list_of_lexemes(textString):
         break
     
 
-    print("Final: ",textString, "\nLength: ", len(textString))
-    print(ListOfLexemes)
+    # print("Final: ",textString, "\nLength: ", len(textString))
+    # print(ListOfLexemes)
 
-fileName = "F:\\2S A.Y. 2021-2022\\CMSC 124 Project JUST DO IT BY MARCH DAMIT\\a.lol"
-file = open(fileName, "r")
-fileText = file.read()
-fileText = fileText.replace("\n", " \n")
-fileText += " "
-print(fileText)
-return_list_of_lexemes(fileText)
-print_lexeme_list(ListOfLexemes)
+# fileName = "F:\\2S A.Y. 2021-2022\\CMSC 124 Project JUST DO IT BY MARCH DAMIT\\a.lol"
+# file = open(fileName, "r")
+# fileText = file.read()
+# fileText = fileText.replace("\n", " \n")
+# fileText += " "
+# print(fileText)
+# return_list_of_lexemes(fileText)
+# print_lexeme_list(ListOfLexemes)

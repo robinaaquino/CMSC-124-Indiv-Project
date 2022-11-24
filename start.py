@@ -4,8 +4,8 @@
 # This program is an individual implementation of the LOL interpreter
 
 # Code Conventions
-#Functions in snake_case
-#Variables in camelCase
+# Functions in snake_case
+# Variables in camelCase
 # Global variables in PascalCase
 # Constant variables in ALLCAPS
 
@@ -13,9 +13,20 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
+from tkinter import simpledialog
 from lex import *
+from grammar import *
+from objectDefinition import *
+from utilityFunctions import *
 
 N = 1
+# create main window
+MainWindow = Tk()
+
+# create a title for the window
+MainWindow.title("LOL Interpreter vers. CMSC124")
+# MainWindow.geometry("900x400")
+MainWindow.config(bg='skyblue')
 
 # TODO
 # Switch from pack to grid
@@ -36,11 +47,25 @@ CurrentlyAccessedFile = ''  # file opened by user
 
 # ui functions
 
+##################################
+# def save_user_input_function():
+#     global UserInputValue
+
+#     UserInputValue = TextArea.get("1.0", END)[0:-1]
+
+# # Function that is used to get user input
+# # Accepts no arguments
+# def open_user_input_window():
+#     print('is this running?')
+#     UserWindow = Toplevel(MainWindow)
+
+#     UserInputTextArea = Text(UserWindow)
+#     UserInputInputButton = Button(UserWindow, text="Enter", command=save_user_input_function)
+##################################
+
 # Function that is used to load a text file
 # Accepts no arguments
 # Sets the CurrentlyAccessedFile variable
-
-
 def load_text():  # function used to load a text
     global CurrentlyAccessedFile  # access the global variable
     fileName = filedialog.askopenfilename(initialdir="C:/Users/Harlight/Documents", filetypes=[
@@ -70,8 +95,6 @@ def load_text():  # function used to load a text
 # Runs different functions
 # Gets text from text area and writes to file
 # Updates lexeme table based on text from text area
-
-
 def execute_function():  # function used to set a text
     global CurrentlyAccessedFile  # access the file
     global ListOfLexemes
@@ -79,15 +102,21 @@ def execute_function():  # function used to set a text
     if CurrentlyAccessedFile:
 
         # get the current contents of the text area
-        currentTextAreaContents = TextArea.get("1.0", END)
+        currentTextAreaContents = TextArea.get("1.0", END)[0:-1] #.get always adds a newline so it needs to be sliced
         # write to the selected text file
+
         fileData = open(CurrentlyAccessedFile, "w")
         fileData.write(currentTextAreaContents)
 
-        fileText = currentTextAreaContents.replace(
-            "\n", " \n")  # set new lines as separate strings
+        # fileText = currentTextAreaContents.replace(
+        #     "\n", "\n")  # set new lines as separate strings 
+        fileText = currentTextAreaContents
+        #ATTEMPT TO FIX BUG
+
+
         ListOfLexemes.clear()  # clear global variable before adding more lexemes
         return_list_of_lexemes(fileText)  # parse the file
+        # print_lexeme_list(ListOfLexemes)
         fileData.close()  # close the file
 
         for item in LexemeTableFrame.get_children():  # delete contents in table if any
@@ -102,60 +131,50 @@ def execute_function():  # function used to set a text
                 ListOfLexemes[i].string, ListOfLexemes[i].lineNumber, ListOfLexemes[i].classification))  # insert each lexeme to the table
             table_row_counter += 1  # increment identifier for table rows
 
+        ResultText = return_list_of_symbols() #parse the lexemes
+
+        #result in console
+        if(len(ResultText) != 0):
+            ConsoleArea.delete("1.0", END) #delete contents in console
+            ConsoleArea.insert(END, ResultText) #put new contents in console
+
     else:
         # show an error when trying to execute without a file
         messagebox.showerror(title="Error", message="No selected file")
 
 
-# create main window
-MainWindow = Tk()
+# TopFrame
+TopFrame = Frame(MainWindow)
+TopFrame.pack(ipadx=10, ipady=10)
 
-# create a title for the window
-MainWindow.title("LOL Interpreter vers. CMSC124")
-MainWindow.geometry("800x400")
-
-# frames
-# text frames for file selection and text area
-TextFrame = Frame(MainWindow)
+#text frame
+TextFrame = Frame(TopFrame)
+TextFrame.pack(ipadx=10, ipady=10, side=LEFT)
 TextFrameUpper = Frame(TextFrame)
 TextFrameLower = Frame(TextFrame)
-TextFrame.pack()
-TextFrameUpper.pack(fill=BOTH, expand=True, side=TOP)
-TextFrameLower.pack(fill=BOTH, expand=True, side=BOTTOM)
+TextFrameUpper.pack(ipadx=10, ipady=10, side=TOP)
+TextFrameLower.pack(ipadx=10, ipady=10, side=BOTTOM)
 
-# ExecuteFrame for the button
-ExecuteFrame = Frame(MainWindow)
-ExecuteFrame.pack()
-
-# LexemeFrame for the lexemes and classificaiton
-LexemeFrame = Frame(MainWindow)
-LexemeFrame.pack()
-LexemeFrameYScrollbar = Scrollbar(LexemeFrame)
-LexemeFrameYScrollbar.pack(side=RIGHT, fill=Y)
-
-
-# widgets for text frame
-FileDirectory = StringVar()
-FileDirectory.set('(/(=w=)?')
+#widgets for text frame
+FileDirectory = StringVar() #variable for holding file name
+FileDirectory.set('No file selected')
 FileDirectoryLabel = Label(TextFrameUpper, textvariable=FileDirectory)
-FileDirectoryLabel.pack(side=LEFT, padx=5, pady=5)
+FileDirectoryLabel.pack(padx=5, pady=5, fill=X, expand=TRUE, side=LEFT)
 
-SelectFileButton = Button(TextFrameUpper, text="*(*w*)*", command=load_text)
-SelectFileButton.pack(side=RIGHT, padx=5, pady=5)
+SelectFileButton = Button(TextFrameUpper, text="Select file", command=load_text)
+SelectFileButton.pack(padx=5, pady=5, fill=X, expand=TRUE,side=RIGHT)
 
-TextArea = Text(TextFrameLower, height=5, width=52)
-TextArea.pack(padx=5, pady=5)
+TextArea = Text(TextFrameLower)
+TextArea.pack(padx=5, pady=5, expand=TRUE, fill=BOTH, side=LEFT)
 
-# widgets for execute frame
-ExecuteButton = Button(ExecuteFrame, text="\(owo)/", command=execute_function)
-ExecuteButton.pack(padx=5, pady=5)
+#lexeme frame
+LexemeFrame = Frame(TopFrame)
+LexemeFrame.pack(ipadx=10, ipady=10, expand=TRUE, fill=BOTH, side=LEFT)
+LexemeFrameYScrollbar = Scrollbar(LexemeFrame)
+LexemeFrameYScrollbar.pack(side=LEFT, fill=Y) #TODO GUI ISSUES WITH SCROLLBAR
 
-# widgets for lexeme table frame
-LexemeTableFrame = ttk.Treeview(
-    LexemeFrame, yscrollcommand=LexemeFrameYScrollbar.set)
-LexemeTableFrame.pack()
-
-# set scrollbar to access y view
+#widgets for lexeme frame
+LexemeTableFrame = ttk.Treeview(LexemeFrame, yscrollcommand=LexemeFrameYScrollbar.set)
 LexemeFrameYScrollbar.config(command=LexemeTableFrame.yview)
 
 LexemeTableFrame['columns'] = (
@@ -171,7 +190,43 @@ LexemeTableFrame.heading('lexeme', text="Lexeme", anchor=CENTER)
 LexemeTableFrame.heading('line_number', text="Line Number", anchor=CENTER)
 LexemeTableFrame.heading(
     'classification', text="Classification", anchor=CENTER)
+LexemeTableFrame.pack(padx=5, pady=5, expand=TRUE, fill=BOTH, side=LEFT)
 
-LexemeTableFrame.pack()
+#symbol frame
+SymbolFrame = Frame(TopFrame)
+SymbolFrame.pack(ipadx=10, ipady=10, expand=TRUE, fill=BOTH, side=LEFT)
+SymbolFrameYScrollbar = Scrollbar(SymbolFrame)
+SymbolFrameYScrollbar.pack(side=LEFT, fill=Y)
+
+#widgets for symbol frame
+SymbolTableFrame = ttk.Treeview(LexemeFrame, yscrollcommand=SymbolFrameYScrollbar.set)
+SymbolFrameYScrollbar.config(command=SymbolTableFrame.yview)
+
+SymbolTableFrame['columns'] = (
+    'identifier', 'value')  # set columns
+SymbolTableFrame.column('#0', width=0, stretch=NO)
+SymbolTableFrame.column('identifier', anchor=CENTER, width=80)
+SymbolTableFrame.column('value', anchor=CENTER, width=80)
+
+# set headings of columns
+SymbolTableFrame.heading('#0', text="Symbol", anchor=CENTER)
+SymbolTableFrame.heading('identifier', text="Identifier", anchor=CENTER)
+SymbolTableFrame.heading('value', text="Value", anchor=CENTER)
+SymbolTableFrame.pack(padx=5, pady=5, expand=TRUE, fill=BOTH, side=LEFT)
+
+#middle frame
+MiddleFrame = Frame(MainWindow)
+MiddleFrame.pack(ipadx=10, ipady=10, expand=TRUE, fill=BOTH)
+
+#widgets for middle frame
+ExecuteButton = Button(MiddleFrame, text="Execute", command=execute_function)
+ExecuteButton.pack(padx=5, pady=5)
+
+#bottom frame
+BottomFrame = Frame(MainWindow)
+BottomFrame.pack(ipadx=10, ipady=10, expand=TRUE, fill=BOTH)
+
+ConsoleArea = Text(BottomFrame)
+ConsoleArea.pack(padx=5, pady=5, expand=TRUE, fill=BOTH, side=LEFT)
 
 MainWindow.mainloop()
