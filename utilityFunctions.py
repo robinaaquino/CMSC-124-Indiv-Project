@@ -19,7 +19,7 @@ def print_lexeme_list(lexemeList):
 
 # Function that prints lexeme properties
 # Prints properties
-def print_lexeme(lexeme):
+def print_lexeme(lexeme: Lexeme):
     print("\n*******************\n")
     print("String: ", lexeme.string)
     print("Classification: ", lexeme.classification)
@@ -27,7 +27,7 @@ def print_lexeme(lexeme):
 
 # Function that prints grammar result properties
 # Prints properties
-def print_grammar_result(grammarResult):
+def print_grammar_result(grammarResult: GrammarResult):
     print("\n*******************\n")
     print("Grammar Identifier: ", grammarResult.grammarIdentifier)
     print("Line Number: ", grammarResult.lineNumber)
@@ -39,7 +39,7 @@ def print_grammar_result(grammarResult):
 
 # Function that prints typecast result properties
 # Prints properties
-def print_typecast_result(typecastResult):
+def print_typecast_result(typecastResult: TypecastResult):
     print("\n*******************\n")
     print("value: ", typecastResult.value)
     print("ifSuccess: ", typecastResult.ifSuccess)
