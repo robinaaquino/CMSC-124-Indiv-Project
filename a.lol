@@ -1,3 +1,4 @@
 HAI
-PRODUKT OF SUM OF 1 AN 2 AN 4
+I HAS A variable
+I HAS A thing ITZ SUM OF
 KTHX
