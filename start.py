@@ -98,6 +98,7 @@ def load_text():  # function used to load a text
 def execute_function():  # function used to set a text
     global CurrentlyAccessedFile  # access the file
     global ListOfLexemes
+    global ListOfSymbols
 
     if CurrentlyAccessedFile:
 
@@ -111,10 +112,13 @@ def execute_function():  # function used to set a text
         # fileText = currentTextAreaContents.replace(
         #     "\n", "\n")  # set new lines as separate strings 
         fileText = currentTextAreaContents
+        fileText = fileText.replace("\n", " \n")
         #ATTEMPT TO FIX BUG
 
-
         ListOfLexemes.clear()  # clear global variable before adding more lexemes
+        ListOfSymbols.clear()  # clear global variable before adding more lexemes
+        ResultText = "" # clear global result text
+
         return_list_of_lexemes(fileText)  # parse the file
         # print_lexeme_list(ListOfLexemes)
         fileData.close()  # close the file
@@ -122,16 +126,25 @@ def execute_function():  # function used to set a text
         for item in LexemeTableFrame.get_children():  # delete contents in table if any
             LexemeTableFrame.delete(item)
 
-        table_row_counter = 0  # initialize identifier for table rows
+        lexeme_table_row_counter = 0  # initialize identifier for table rows
         for i in range(len(ListOfLexemes)):  # iterate over each lexeme in ListOfLexemes
             # do not include new lines in table
             if(ListOfLexemes[i].classification == "New Line"):
                 continue
-            LexemeTableFrame.insert(parent='', index='end', iid=table_row_counter, text='', values=(
+            LexemeTableFrame.insert(parent='', index='end', iid=lexeme_table_row_counter, text='', values=(
                 ListOfLexemes[i].string, ListOfLexemes[i].lineNumber, ListOfLexemes[i].classification))  # insert each lexeme to the table
-            table_row_counter += 1  # increment identifier for table rows
+            lexeme_table_row_counter += 1  # increment identifier for table rows
 
         ResultText = return_list_of_symbols() #parse the lexemes
+
+        for item in SymbolTableFrame.get_children():  # delete contents in table if any
+            SymbolTableFrame.delete(item)
+
+        symbol_table_row_counter = 0  # initialize identifier for table rows
+        for i in range(len(ListOfSymbols)):  # iterate over each lexeme in ListOfSymbols
+            SymbolTableFrame.insert(parent='', index='end', iid=symbol_table_row_counter, text='', values=(
+                ListOfSymbols[i].identifier, ListOfSymbols[i].value))  # insert each symbol to the table
+            symbol_table_row_counter += 1  # increment identifier for table rows
 
         #result in console
         if(len(ResultText) != 0):
