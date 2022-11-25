@@ -24,7 +24,6 @@ def lexeme_list_is_empty(lexemeList):
     global ErrorLineNumber
 
     if(len(lexemeList) == 0):
-        add_error_result_text(GrammarErrorEmptyLexemeList, ErrorLineNumber)
         return True
     else:
         return False
@@ -125,13 +124,9 @@ def typecast_value(value, newDataType):
 
     return TypecastResult(value, False)
     
-
-
 # Function that checks grammar of print
 # Returns GrammarResult
 def grammar_print(lexemeList):
-    print('print\n')
-    # print_lexeme_list(lexemeList)
     global ResultText
     global ErrorLineNumber
 
@@ -145,8 +140,6 @@ def grammar_print(lexemeList):
 # Returns GrammarResult
 #TODO change grammar in word, does not need linebreak
 def grammar_multiline_cmt2(lexemeList):
-    # print('multiline_cmt2\n')
-    # print_lexeme_list(lexemeList)
     global ResultText
     global ErrorLineNumber
 
@@ -178,8 +171,6 @@ def grammar_multiline_cmt2(lexemeList):
 # Function that checks grammar of multiline_cmt
 # Returns GrammarResult
 def grammar_multiline_cmt(lexemeList):
-    # print('multiline_cmt\n')
-    # print_lexeme_list(lexemeList)
     global ResultText
     global ErrorLineNumber
 
@@ -209,10 +200,9 @@ def grammar_multiline_cmt(lexemeList):
 # Function that checks grammar of input
 # Returns GrammarResult
 def grammar_input(lexemeList):
-    # print('input\n')
-    # print_lexeme_list(lexemeList)
     global ResultText
     global ErrorLineNumber
+    global ListOfSymbols
 
     grammarResult = GrammarResult("", -1, [], False, False, True, None)
 
@@ -233,7 +223,7 @@ def grammar_input(lexemeList):
 
             # check if identifier exists in symbol table
             for symbolCounter in range(len(ListOfSymbols)):
-                symbol = ListOfSymbols(symbolCounter)
+                symbol = ListOfSymbols[symbolCounter]
                 #if identifier matches with lexeme identifier
                 if(symbol.identifier == lexemeList[0].string):
                     UserInputValue = simpledialog.askstring("Input", "Input text")
@@ -260,10 +250,203 @@ def grammar_input(lexemeList):
 
     return grammarResult
 
+# Function that checks grammar of variable_assignment
+# Returns Grammar Result
+def grammar_variable_assignment(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+    global ListOfSymbols
+
+    grammarResult = GrammarResult("", -1, [], False, False, True, None)
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if(lexemeList[0].classification == "Variable Declaration"):
+        lexemeList.pop(0)
+
+        #check if lexeme list empty before checking for future matches
+        if(lexeme_list_is_empty(lexemeList)):
+            add_error_result_text(GrammarErrorIdentifierNoIdentifier, ErrorLineNumber)
+
+            return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, False, False, None)
+            
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        if (lexemeList[0].classification == "Identifier"):
+            identifierName = lexemeList[0].string
+            identifierCounter = 0
+            lexemeList.pop(0)
+
+            for symbolCounter in range(len(ListOfSymbols)):
+                symbol = ListOfSymbols[symbolCounter]
+
+                #check if identifier already existed in symbol table
+                if(symbol.identifier == identifierName):
+                    # return fail
+                    add_error_result_text(variable_error_already_existed(identifierName), ErrorLineNumber)
+
+                    return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, True, None)
+            
+            #if identifier haven't existed, add to symbol table
+            ListOfSymbols.append(Symbol(identifierName, None))
+            identifierCounter = len(ListOfSymbols) - 1
+
+            if(lexeme_list_is_empty(lexemeList)):
+                return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+
+            if(lexemeList[0].classification == "Variable Declaration Assignment"):
+                lexemeList.pop(0)
+
+                if(lexeme_list_is_empty(lexemeList)):
+                    return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, False, False, None)
+                ErrorLineNumber = lexemeList[0].lineNumber
+
+                if (lexemeList[0].classification == "Identifier"):
+                    identifierName = lexemeList[0].string
+                    lexemeList.pop(0)
+
+                    #check if identifier exists in symbol table
+                    for symbolCounter in range(len(ListOfSymbols)):
+                        symbol = ListOfSymbols[symbolCounter]
+
+                        #set the value of the previous identifier
+                        if(symbol.identifier == identifierName):
+                            ListOfSymbols[identifierCounter].value = ListOfSymbols[symbolCounter].value
+
+                            #return success for current grammar
+                            return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+
+                    #if not symbol error
+                    add_error_result_text(variable_error_missing(identifierName), ErrorLineNumber)
+                    
+                    return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+                
+                #check for match with literal
+                grammarLiteralResult: GrammarResult = grammar_literal(lexemeList)
+
+                #if grammar fit literal
+                if(if_grammar_has_error(grammarLiteralResult)): #if a syntax or symbol error occurred
+                    return grammarLiteralResult
+                elif(if_grammar_matched(grammarLiteralResult)): #if successfully matched
+                    print(identifierCounter)
+                    print(ListOfSymbols[0].value)
+                    ListOfSymbols[identifierCounter].value = grammarLiteralResult.value #update value
+
+                    return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+
+                #check for match with expr
+                grammarExprResult = grammar_expr(lexemeList)
+
+                #if grammar fit expr
+                if(if_grammar_has_error(grammarExprResult)): #if a syntax or symbol error occurred
+                    return grammarExprResult
+                elif(if_grammar_matched(grammarExprResult)): #if successfully matched
+                    ListOfSymbols[identifierCounter].value = grammarExprResult.value #update value
+
+                    return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+
+                #return grammar fail
+                return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, False, False, None)
+            else: #if not matched
+                return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+
+        else:
+            add_error_result_text(GrammarErrorIdentifierNoIdentifier, ErrorLineNumber)
+            
+            return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, False, False, None)
+
+    elif(lexemeList[0].classification == "Identifier"):
+        identifierName = lexemeList[0].string
+        identifierCounter = 0
+        doesExist = False
+        lexemeList.pop(0)
+
+        for symbolCounter in range(len(ListOfSymbols)): #check if identifier exists in symbol table
+            symbol = ListOfSymbols[symbolCounter]
+
+            #check if identifier exists
+            if(symbol.identifier == identifierName):
+                doesExist = True
+                identifierCounter = symbolCounter
+                break
+                
+        if(doesExist == False): #if identifier doesn't exist in lexeme table, return fail
+            add_error_result_text(variable_error_missing(identifierName), ErrorLineNumber)
+
+            return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, False, True, None)
+
+        #check if lexeme list empty before checking for future matches
+        if(lexeme_list_is_empty(lexemeList)):
+            add_error_result_text(GrammarErrorVariableAssignmentKeywordMissing, ErrorLineNumber)
+
+            return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        if(lexemeList[0].classification == "Variable Assignment"):
+            lexemeList.pop(0)
+
+            #check if lexeme list empty before checking for future matches
+            if(lexeme_list_is_empty(lexemeList)):
+                add_error_result_text(GrammarErrorMissingValue, ErrorLineNumber)
+
+                return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, False, False, None)
+
+            if (lexemeList[0].classification == "Identifier"):
+                identifierName = lexemeList[0].string
+                lexemeList.pop(0)
+
+                #check if identifier exists in symbol table
+                for symbolCounter in range(len(ListOfSymbols)):
+                    symbol = ListOfSymbols[symbolCounter]
+
+                    #set the value of the previous identifier
+                    if(symbol.identifier == identifierName):
+                        ListOfSymbols[identifierCounter].value = ListOfSymbols[symbolCounter].value
+
+                        #return success for current grammar
+                        return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+
+                #if not symbol error
+                add_error_result_text(variable_error_missing(identifierName), ErrorLineNumber)
+                
+                return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+            
+            #check for match with literal
+            grammarLiteralResult: GrammarResult = grammar_literal(lexemeList)
+
+            #if grammar fit literal
+            if(if_grammar_has_error(grammarLiteralResult)): #if a syntax or symbol error occurred
+                return grammarLiteralResult
+            elif(if_grammar_matched(grammarLiteralResult)): #if successfully matched
+                print(identifierCounter)
+                print(ListOfSymbols[0].value)
+                ListOfSymbols[identifierCounter].value = grammarLiteralResult.value #update value
+
+                return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+
+            #check for match with expr
+            grammarExprResult = grammar_expr(lexemeList)
+
+            #if grammar fit expr
+            if(if_grammar_has_error(grammarExprResult)): #if a syntax or symbol error occurred
+                return grammarExprResult
+            elif(if_grammar_matched(grammarExprResult)): #if successfully matched
+                ListOfSymbols[identifierCounter].value = grammarExprResult.value #update value
+
+                return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+
+        #return grammar fail
+        return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, False, False, None)
+
+    #return fail
+    return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, False, False, False, None)
+
 # Function that checks grammar of literal
 # Returns GrammarResult
 def grammar_literal(lexemeList):
-    # print('literal')
     global ResultText
     global ErrorLineNumber
 
@@ -297,7 +480,6 @@ def grammar_literal(lexemeList):
         return grammarResult
     elif(lexemeList[0].classification == "Troof Literal"):
         if(lexemeList[0].string == "WIN"):
-            # print('yea?')
             grammarResult = set_grammar("literal", ErrorLineNumber, lexemeList, True, True, False, True)
         else:
             grammarResult = set_grammar("literal", ErrorLineNumber, lexemeList, True, True, False, False)
@@ -313,11 +495,10 @@ def grammar_literal(lexemeList):
 # Function that checks grammar of binary_math_operator
 # Returns GrammarResult
 def grammar_binary_math_operator(lexemeList):
-    print('binary math')
     global ResultText
     global ErrorLineNumber
 
-    grammarResult = GrammarResult("", -1, [], False, False, True, None)
+    grammarResult = GrammarResult("", -1, [], False, False, False, None)
 
     #check if lexeme list is empty before checking for further matches
     if(lexeme_list_is_empty(lexemeList)):
@@ -332,7 +513,9 @@ def grammar_binary_math_operator(lexemeList):
 
         #check if lexeme list is empty before checking for further matches
         if(lexeme_list_is_empty(lexemeList)):
-            return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, False, False, False, None)
+            add_error_result_text(GrammarBinaryExpNoOperand, ErrorLineNumber)
+
+            return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, False, False, None)
         ErrorLineNumber = lexemeList[0].lineNumber
 
         grammarBinaryExp1Result = grammar_binary_exp(lexemeList)
@@ -372,7 +555,10 @@ def grammar_binary_math_operator(lexemeList):
                         secondOperand = typecast_value(secondOperand, "NUMBAR")
                     
                     if(firstOperand.ifSuccess == False or secondOperand.ifSuccess == False):
-                        add_error_result_text(TypecastError, ErrorLineNumber)
+                        if(firstOperand.ifSuccess == False):
+                            add_error_result_text(typecast_error(grammarBinaryExp1Result.value, operationResultType), ErrorLineNumber)
+                        elif(secondOperand.ifSuccess == False):
+                            add_error_result_text(typecast_error(grammarBinaryExp2Result.value, operationResultType), ErrorLineNumber)
 
                         return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
                     
@@ -400,22 +586,22 @@ def grammar_binary_math_operator(lexemeList):
                             operationValue = typecast_value(operationValue, "NUMBR")
 
                     #return success
+
                     return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
-    
+
     return grammarResult
 
 # Function that checks grammar of binary_exp
 # Returns GrammarResult
 def grammar_binary_exp(lexemeList):
-    print("binary exp")
     global ResultText
     global ErrorLineNumber
 
-    grammarResult = GrammarResult("", -1, [], False, False, True, None)
+    grammarResult = GrammarResult("", -1, [], False, False, False, None)
 
     #check if lexeme list is empty before checking for further matches
     if(lexeme_list_is_empty(lexemeList)):
-        return set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, False, False, False, None)
+        return set_grammar("binary_exp", ErrorLineNumber, lexemeList, False, False, False, None)
     ErrorLineNumber = lexemeList[0].lineNumber
 
     #literal
@@ -429,18 +615,19 @@ def grammar_binary_exp(lexemeList):
     grammarMathOperatorResult: GrammarResult = grammar_binary_math_operator(lexemeList)
 
     if(if_grammar_has_error(grammarMathOperatorResult) or if_grammar_matched(grammarMathOperatorResult)): #if a syntax or symbol error occurred, or if successful
-        print('huwat')
         return grammarMathOperatorResult
 
     #binary_boolean_op binary_exp "an" binary_exp
 
-    return grammarResult
+    #return fail
+    add_error_result_text(GrammarBinaryExpNoValue, ErrorLineNumber)
+
+    return set_grammar("binary_exp", ErrorLineNumber, lexemeList, False, False, True, None)
     
 
 # Function that checks grammar of expr
 # Returns GrammarResult
 def grammar_expr(lexemeList):
-    print('1 run bois')
     global ResultText
     global ErrorLineNumber
 
@@ -478,46 +665,45 @@ def grammar_expr(lexemeList):
     if(if_grammar_has_error(grammarBinaryExpResult) or if_grammar_matched(grammarBinaryExpResult)): #if a syntax or symbol error occurred, or if successful
         return grammarBinaryExpResult
 
-    #match with infinite arity expr
-
+    #TODO match with infinite arity expr
 
     #default error catch if it did not match any
     grammarResult = GrammarResult("stmt2", ErrorLineNumber, lexemeList, False, False, False, None)
     return grammarResult
 
     
-
-
 # Function that checks grammar of stmt2
 # Returns GrammarResult
 def grammar_stmt2(lexemeList):
-    # print('stmt2\n')
-    # print_lexeme_list(lexemeList)
+    print('uwu')
+    print_lexeme_list(lexemeList)
+    print('uwu')
     global ResultText
     global ErrorLineNumber
 
+    #check if grammar fit input
     grammarInputResult: GrammarResult = grammar_input(lexemeList)
 
-    #if grammar fit input
     if(if_grammar_has_error(grammarInputResult) or if_grammar_matched(grammarInputResult)): #if a syntax or symbol error occurred, or if successful
         return grammarInputResult
 
+    #check if grammar fit multiline comment
     grammarMultilineCommentResult: GrammarResult = grammar_multiline_cmt(lexemeList)
 
-    #if grammar fit multiline comment
     if(if_grammar_has_error(grammarMultilineCommentResult) or if_grammar_matched(grammarMultilineCommentResult)): #if a syntax or symbol error occured, or if successful
         return grammarMultilineCommentResult
 
+    #check if grammar fit expr
     grammarExprResult: GrammarResult = grammar_expr(lexemeList)
 
-    #if grammar fit expr
     if(if_grammar_has_error(grammarExprResult) or if_grammar_matched(grammarExprResult)): #if a syntax or symbol error occured, or if successful
-        print('yea it matched here right?')
         return grammarExprResult
 
-    print_grammar_result(grammarExprResult)
+    #check if grammar fit variable assignment
+    grammarVariableAssignmentResult: GrammarResult = grammar_variable_assignment(lexemeList)
 
-    print('No matched?')
+    if(if_grammar_has_error(grammarVariableAssignmentResult) or if_grammar_matched(grammarVariableAssignmentResult)): #if a syntax or symbol error occured, or if successful
+        return grammarVariableAssignmentResult
 
     # else test other grammars
 
@@ -530,15 +716,37 @@ def grammar_stmt2(lexemeList):
 # Accepts a list
 # Returns GrammarResult
 def grammar_stmt(lexemeList: list):
-    # print('stmt\n')
-    # print_lexeme_list(lexemeList)
     global ResultText
     global ErrorLineNumber
 
     grammarStmt2Result: GrammarResult = grammar_stmt2(lexemeList)
 
-    if(if_grammar_has_error(grammarStmt2Result) or if_grammar_matched(grammarStmt2Result)): #if it matched
+    # if(if_grammar_has_error(grammarStmt2Result) or if_grammar_matched(grammarStmt2Result)): #if it resulted in error
+    #     return grammarStmt2Result
+
+    if(if_grammar_has_error(grammarStmt2Result)): #if it resulted in error
         return grammarStmt2Result
+    elif(if_grammar_matched(grammarStmt2Result)): #if it matched with stmt2, check for other abstractions
+        # print('matched at first')
+        # print_lexeme_list(lexemeList)
+        if(lexeme_list_is_empty(lexemeList)): #no error if no more lexemes
+            return grammarStmt2Result
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        #match with inline comment
+
+        #check if it still has other statements
+        if(lexemeList[0].classification == "New Line"):
+            lexemeList.pop(0)
+
+            grammarStmtResult: GrammarResult = grammar_stmt(lexemeList)
+
+            if(if_grammar_has_error(grammarStmtResult) or if_grammar_matched(grammarStmtResult)): #if it matched
+                return grammarStmtResult
+        else:
+            add_error_result_text(GrammarErrorNewLineMissing, ErrorLineNumber)
+
+            return set_grammar("stmt", ErrorLineNumber, lexemeList, True, False, False, None)
 
     #TODO should we accept HAI THX only? change how error is parsed, based on grammar tho
     # change grammar if we'll accept HAI THX, for now don't accept HAI THX only
@@ -553,8 +761,6 @@ def grammar_stmt(lexemeList: list):
 # Accepts a list
 # Returns GrammarResult
 def grammar_program(lexemeList: list):
-    # print('prg\n')
-    # print_lexeme_list(lexemeList)
     global ResultText
     global ErrorLineNumber
 
@@ -567,6 +773,7 @@ def grammar_program(lexemeList: list):
 
     # check if it starts with the code delimiter
     if (lexemeList[0].classification == "Code Delimiter Start"):
+        lexemeList.pop(0) #remove delimiter and new line
         lexemeList.pop(0)
 
         # check if lexeme list is empty before checking for code delimiter end
@@ -576,6 +783,7 @@ def grammar_program(lexemeList: list):
 
         # check if it ends with the code delimiter
         if(lexemeList[-1].classification == "Code Delimiter End"):
+            lexemeList.pop(-1) #remove delimiter and new line
             lexemeList.pop(-1)
 
             # check if lexeme list is empty before checking for further matches
@@ -583,6 +791,7 @@ def grammar_program(lexemeList: list):
                 return set_grammar("program", ErrorLineNumber, lexemeList, True, False, False, None)
 
             #TODO Should we accept HAI THX only with no other code?
+
             ErrorLineNumber = lexemeList[0].lineNumber
             
             return grammar_stmt(lexemeList) #check if it fulfills stmt
@@ -605,26 +814,7 @@ def return_list_of_symbols():
     global ResultText
 
     grammarProgramResult = grammar_program(ListOfLexemes)
-
+    print_lexeme_list(ListOfLexemes)
     print_grammar_result(grammarProgramResult)
     
     return ResultText
-
-# print('\n/////////////')
-# print_typecast_result(typecast_value(1, "YARN"))
-# print('\n/////////////')
-# print_typecast_result(typecast_value(1.0, "YARN"))
-# print('\n/////////////')
-# print_typecast_result(typecast_value("1", "YARN"))
-# print('\n/////////////')
-# print_typecast_result(typecast_value("1.0", "YARN"))
-# print('\n/////////////')
-# print_typecast_result(typecast_value("\"1\"", "YARN"))
-# print('\n/////////////')
-# print_typecast_result(typecast_value("WIN", "YARN"))
-# print('\n/////////////')
-# print_typecast_result(typecast_value("FAIL", "YARN"))
-# print('\n/////////////')
-
-#LAST
-#CHECK IF TYPECAST IS WORKING

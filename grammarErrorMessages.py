@@ -12,11 +12,20 @@ GrammarErrorIdentifierNoIdentifier = "Missing Identifier"
 GrammarErrorIdentifierNoIdentifierInSymbolTable = "Identifier does not exist"
 GrammarErrorStmt2NoAbstractionMatch = "Matched no valid abstractions for stmt2"
 GrammarErrorStmtNoAbstractionMatch = "Matched no valid abstractions for stmt"
-
+GrammarErrorVariableAssignmentKeywordMissing = "Missing R keyword"
+GrammarErrorMissingValue = "Missing identifier, literal or expression"
+GrammarBinaryExpNoValue = "Error in binary expression"
+GrammarBinaryExpNoOperand = "No operands for expression"
 
 # Utility Error Codes
 GrammarErrorEmptyLexemeList = "Lexeme list is empty"
-TypecastError = "Error in typecast"
+GrammarErrorNewLineMissing = "Missing new line"
 
-# Utility Codes
-GrammarSucess = "Successfully matched"
+def typecast_error(value, dataType):
+    return ("Error in typecasting " + str(value) + " to " + dataType)
+
+def variable_error_already_existed(name):
+    return (name + " variable already exists")
+
+def variable_error_missing(name):
+    return (name + " variable is missing")
