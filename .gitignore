@@ -2,3 +2,6 @@ interpreter.code-workspace
 lex.cpython-310.pyc
 /others
 *.pyc
+lex copy.py
+test_code.py
+a.lol
