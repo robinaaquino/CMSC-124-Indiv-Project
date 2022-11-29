@@ -331,8 +331,6 @@ def grammar_variable_assignment(lexemeList):
                 if(if_grammar_has_error(grammarLiteralResult)): #if a syntax or symbol error occurred
                     return grammarLiteralResult
                 elif(if_grammar_matched(grammarLiteralResult)): #if successfully matched
-                    print(identifierCounter)
-                    print(ListOfSymbols[0].value)
                     ListOfSymbols[identifierCounter].value = grammarLiteralResult.value #update value
 
                     return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
@@ -492,6 +490,27 @@ def grammar_literal(lexemeList):
     
     return grammarResult
 
+# # Function that checks grammar of binary_bool_operator
+# # Returns GrammarResult
+# def grammar_bool_operator(lexemeList):
+#     global ResultText
+#     global ErrorLineNumber
+
+#     #check if lexeme list is empty before checking for further matches
+#     if(lexeme_list_is_empty(lexemeList)):
+#         return set_grammar("bool_operator", ErrorLineNumber, lexemeList, False, False, False, None)
+#     ErrorLineNumber = lexemeList[0].lineNumber
+
+#     if(lexemeList[0].classification == "Boolean Operator"):
+#         operationValue = None
+#         operatorValue = lexemeList[0].string
+
+#         lexemeList.pop(0)
+
+
+
+#     return set_grammar("bool_operator", ErrorLineNumber, lexemeList, False, False, False, None)
+
 # Function that checks grammar of binary_math_operator
 # Returns GrammarResult
 def grammar_binary_math_operator(lexemeList):
@@ -604,14 +623,25 @@ def grammar_binary_exp(lexemeList):
         return set_grammar("binary_exp", ErrorLineNumber, lexemeList, False, False, False, None)
     ErrorLineNumber = lexemeList[0].lineNumber
 
-    #literal
+    #if grammar fit literal
     grammarLiteralResult: GrammarResult = grammar_literal(lexemeList)
 
-    #if grammar fit literal
     if(if_grammar_has_error(grammarLiteralResult) or if_grammar_matched(grammarLiteralResult)): #if a syntax or symbol error occurred, or if successful
         return grammarLiteralResult
 
-    #binary_math_op binary_exp "an" binary_exp
+    if(lexemeList[0].classification == "Identifier"):
+        identifierName = lexemeList[0].string
+        lexemeList.pop(0)
+
+        for symbolCounter in range(len(ListOfSymbols)):
+            symbol = ListOfSymbols[symbolCounter]
+
+            #check if identifier exists in symbolCounter
+            if(symbol.identifier == identifierName):
+                # return success
+                return set_grammar("binary_exp", ErrorLineNumber, lexemeList, True, True, True, symbol.value)
+
+    #if grammar fit binary_math_operator
     grammarMathOperatorResult: GrammarResult = grammar_binary_math_operator(lexemeList)
 
     if(if_grammar_has_error(grammarMathOperatorResult) or if_grammar_matched(grammarMathOperatorResult)): #if a syntax or symbol error occurred, or if successful
@@ -620,9 +650,7 @@ def grammar_binary_exp(lexemeList):
     #binary_boolean_op binary_exp "an" binary_exp
 
     #return fail
-    add_error_result_text(GrammarBinaryExpNoValue, ErrorLineNumber)
-
-    return set_grammar("binary_exp", ErrorLineNumber, lexemeList, False, False, True, None)
+    return set_grammar("binary_exp", ErrorLineNumber, lexemeList, False, False, False, None)
     
 
 # Function that checks grammar of expr
@@ -675,9 +703,6 @@ def grammar_expr(lexemeList):
 # Function that checks grammar of stmt2
 # Returns GrammarResult
 def grammar_stmt2(lexemeList):
-    print('uwu')
-    print_lexeme_list(lexemeList)
-    print('uwu')
     global ResultText
     global ErrorLineNumber
 
@@ -693,12 +718,6 @@ def grammar_stmt2(lexemeList):
     if(if_grammar_has_error(grammarMultilineCommentResult) or if_grammar_matched(grammarMultilineCommentResult)): #if a syntax or symbol error occured, or if successful
         return grammarMultilineCommentResult
 
-    #check if grammar fit expr
-    grammarExprResult: GrammarResult = grammar_expr(lexemeList)
-
-    if(if_grammar_has_error(grammarExprResult) or if_grammar_matched(grammarExprResult)): #if a syntax or symbol error occured, or if successful
-        return grammarExprResult
-
     #check if grammar fit variable assignment
     grammarVariableAssignmentResult: GrammarResult = grammar_variable_assignment(lexemeList)
 
@@ -706,6 +725,13 @@ def grammar_stmt2(lexemeList):
         return grammarVariableAssignmentResult
 
     # else test other grammars
+
+
+    #check if grammar fit expr
+    grammarExprResult: GrammarResult = grammar_expr(lexemeList)
+
+    if(if_grammar_has_error(grammarExprResult) or if_grammar_matched(grammarExprResult)): #if a syntax or symbol error occured, or if successful
+        return grammarExprResult
 
     #default grammar error result if it does NOT fit ANY abstractions at all for smt2
     grammarResult = GrammarResult("stmt2", ErrorLineNumber, lexemeList, False, False, False, None)
@@ -727,8 +753,6 @@ def grammar_stmt(lexemeList: list):
     if(if_grammar_has_error(grammarStmt2Result)): #if it resulted in error
         return grammarStmt2Result
     elif(if_grammar_matched(grammarStmt2Result)): #if it matched with stmt2, check for other abstractions
-        # print('matched at first')
-        # print_lexeme_list(lexemeList)
         if(lexeme_list_is_empty(lexemeList)): #no error if no more lexemes
             return grammarStmt2Result
         ErrorLineNumber = lexemeList[0].lineNumber
@@ -816,5 +840,6 @@ def return_list_of_symbols():
     grammarProgramResult = grammar_program(ListOfLexemes)
     print_lexeme_list(ListOfLexemes)
     print_grammar_result(grammarProgramResult)
+    print_symbol_list(ListOfSymbols)
     
     return ResultText
