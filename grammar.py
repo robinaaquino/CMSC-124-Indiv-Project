@@ -965,6 +965,8 @@ def return_list_of_symbols():
     global ListOfLexemes
     global ResultText
 
+    ResultText = ""
+
     grammarProgramResult = grammar_program(ListOfLexemes)
     print_lexeme_list(ListOfLexemes)
     print_grammar_result(grammarProgramResult)
