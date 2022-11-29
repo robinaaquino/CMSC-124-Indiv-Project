@@ -16,6 +16,8 @@ GrammarErrorVariableAssignmentKeywordMissing = "Missing R keyword"
 GrammarErrorMissingValue = "Missing identifier, literal or expression"
 GrammarBinaryExpNoValue = "Error in binary expression"
 GrammarBinaryExpNoOperand = "No operands for expression"
+GrammarInfiniteArityExpNoOperand = "No operands for infinite arity"
+GrammarExprNoAnKeyword = "Missing AN keyword"
 
 # Utility Error Codes
 GrammarErrorEmptyLexemeList = "Lexeme list is empty"
