@@ -645,7 +645,7 @@ def grammar_binary_exp(lexemeList):
             #check if identifier exists in symbolCounter
             if(symbol.identifier == identifierName):
                 # return success
-                return set_grammar("binary_exp", ErrorLineNumber, lexemeList, True, True, True, symbol.value)
+                return set_grammar("binary_exp", ErrorLineNumber, lexemeList, True, True, False, symbol.value)
 
     #if grammar fit binary_math_operator
     grammarMathOperatorResult: GrammarResult = grammar_binary_math_operator(lexemeList)
@@ -757,6 +757,8 @@ def grammar_stmt(lexemeList: list):
     #     return grammarStmt2Result
 
     if(if_grammar_has_error(grammarStmt2Result)): #if it resulted in error
+        add_error_result_text(GrammarErrorStmt2NoAbstractionMatch, ErrorLineNumber)
+
         return grammarStmt2Result
     elif(if_grammar_matched(grammarStmt2Result)): #if it matched with stmt2, check for other abstractions
         if(lexeme_list_is_empty(lexemeList)): #no error if no more lexemes
