@@ -594,9 +594,13 @@ def grammar_binary_bool_operator(lexemeList):
                             operationValue = (firstOperand and not secondOperand) or (not firstOperand and secondOperand)
 
                         #return success
-                        return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+                        return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+                else:
+                    add_error_result_text(GrammarExprNoAnKeyword, ErrorLineNumber)
 
-    return set_grammar("bool_operator", ErrorLineNumber, lexemeList, False, False, False, None)
+                    return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+
+    return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, False, False, False, None)
 
 # Function that checks grammar of binary_math_operator
 # Returns GrammarResult
@@ -702,6 +706,10 @@ def grammar_binary_math_operator(lexemeList):
                     #return success
 
                     return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+            else:
+                add_error_result_text(GrammarExprNoAnKeyword, ErrorLineNumber)
+
+                return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, False, False, None)
 
     return grammarResult
 
