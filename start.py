@@ -146,11 +146,11 @@ def execute_function():  # function used to set a text
                 ListOfSymbols[i].identifier, ListOfSymbols[i].value))  # insert each symbol to the table
             symbol_table_row_counter += 1  # increment identifier for table rows
 
+        ConsoleArea.delete("1.0", END) #delete contents in console
+
         #result in console
         if(len(ResultText) != 0):
-            ConsoleArea.delete("1.0", END) #delete contents in console
             ConsoleArea.insert(END, ResultText) #put new contents in console
-
     else:
         # show an error when trying to execute without a file
         messagebox.showerror(title="Error", message="No selected file")
