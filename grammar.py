@@ -51,6 +51,20 @@ def return_data_type(value):
 
     return dataTypeOfValue
 
+# Function get actual value for python from a value
+# Returns actual value
+def get_actual_value(value):
+    dataTypeOfValue = return_data_type(value)
+
+    if(dataTypeOfValue == "TROOF"):
+        if(value == "WIN"):
+            return True
+        else:
+            return False
+    elif(dataTypeOfValue == "YARN"):
+        return value[1:-1]
+    else:
+        return value
 
 # Function to typecast a value to a data type
 # Returns typecasted value
@@ -62,26 +76,47 @@ def typecast_value(value, newDataType):
     
     #convert value
     if (newDataType == "TROOF"): #convert value to troof
+        # if (dataTypeOfValue == "NOOB"): #if from noob
+        #     return TypecastResult(False, True)
+        # elif (dataTypeOfValue == "NUMBR" or dataTypeOfValue == "NUMBAR"): #if from numbr and numbar
+        #     if (value != 0):
+        #         return TypecastResult(True, True)
+        #     else:
+        #         return TypecastResult(False, True)
+        # elif (dataTypeOfValue == "YARN"): #if from yarn
+        #     value = value[1:-1] #remove quotations
+        #     if(len(value) == 0):
+        #         return TypecastResult(False, True)
+        #     else: 
+        #         return TypecastResult(True, True)
+        # elif (dataTypeOfValue == "TROOF"):
+        #     if(value == "WIN"):
+        #         return TypecastResult(True, True)
+        #     elif(value == "FAIL"):
+        #         return TypecastResult(False, True)
+        #     else:
+        #         return TypecastResult(value, False)
+
         if (dataTypeOfValue == "NOOB"): #if from noob
-            return TypecastResult(False, True)
+            return TypecastResult("FAIL", True)
         elif (dataTypeOfValue == "NUMBR" or dataTypeOfValue == "NUMBAR"): #if from numbr and numbar
             if (value != 0):
-                return TypecastResult(True, True)
+                return TypecastResult("WIN", True)
             else:
-                return TypecastResult(False, True)
+                return TypecastResult("FAIL", True)
         elif (dataTypeOfValue == "YARN"): #if from yarn
             value = value[1:-1] #remove quotations
             if(len(value) == 0):
-                return TypecastResult(False, True)
+                return TypecastResult("FAIL", True)
             else: 
-                return TypecastResult(True, True)
+                return TypecastResult("WIN", True)
         elif (dataTypeOfValue == "TROOF"):
             if(value == "WIN"):
-                return TypecastResult(True, True)
+                return TypecastResult("WIN", True)
             elif(value == "FAIL"):
-                return TypecastResult(False, True)
+                return TypecastResult("FAIL", True)
             else:
-                return TypecastResult(value, False)
+                return TypecastResult(value, "FAIL")
     elif (newDataType == "NUMBAR"): #convert value to numbar
         if (dataTypeOfValue == "NOOB"):
             return TypecastResult(0.0, True)
@@ -424,8 +459,6 @@ def grammar_variable_assignment(lexemeList):
             if(if_grammar_has_error(grammarLiteralResult)): #if a syntax or symbol error occurred
                 return grammarLiteralResult
             elif(if_grammar_matched(grammarLiteralResult)): #if successfully matched
-                print(identifierCounter)
-                print(ListOfSymbols[0].value)
                 ListOfSymbols[identifierCounter].value = grammarLiteralResult.value #update value
 
                 return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
@@ -483,9 +516,9 @@ def grammar_literal(lexemeList):
         return grammarResult
     elif(lexemeList[0].classification == "Troof Literal"):
         if(lexemeList[0].string == "WIN"):
-            grammarResult = set_grammar("literal", ErrorLineNumber, lexemeList, True, True, False, True)
+            grammarResult = set_grammar("literal", ErrorLineNumber, lexemeList, True, True, False, "WIN")
         else:
-            grammarResult = set_grammar("literal", ErrorLineNumber, lexemeList, True, True, False, False)
+            grammarResult = set_grammar("literal", ErrorLineNumber, lexemeList, True, True, False, "FAIL")
 
         lexemeList.pop(0)
 
@@ -562,8 +595,8 @@ def grammar_binary_bool_operator(lexemeList):
                         return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
                         #TODO changed to symbol error true due to error in typecast
                     
-                    firstOperand = firstOperand.value
-                    secondOperand = secondOperand.value
+                    firstOperand = get_actual_value(firstOperand.value)
+                    secondOperand = get_actual_value(secondOperand.value)
                         
                     #if no error in typecast, proceed with operation
                     if(operatorValue == "BOTH OF"):
@@ -572,6 +605,15 @@ def grammar_binary_bool_operator(lexemeList):
                         operationValue = firstOperand or secondOperand
                     elif(operatorValue == "WON OF"):
                         operationValue = (firstOperand and not secondOperand) or (not firstOperand and secondOperand)
+
+                    #typecast value back to TROOF
+                    operationValue = typecast_value(operationValue, "TROOF")
+
+                    if(operationValue.ifSuccess == False):
+                        add_error_result_text(typecast_error(operationValue.value, "TROOF"), ErrorLineNumber)
+                        return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
+                    
+                    operationValue = operationValue.value
 
                     #return success
                     return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
@@ -657,8 +699,8 @@ def grammar_binary_math_operator(lexemeList):
                         #TODO check if symbol error is supposed to be false, this is an error
                         #changed to True
                     
-                    firstOperand = firstOperand.value
-                    secondOperand = secondOperand.value
+                    firstOperand = get_actual_value(firstOperand.value)
+                    secondOperand = get_actual_value(secondOperand.value)
                         
                     #if no error in typecast, proceed with operation
                     if(operatorValue == "SUM OF"):
@@ -680,7 +722,7 @@ def grammar_binary_math_operator(lexemeList):
                         if(((operationValue * 10) % 10) == 0):
                             result = typecast_value(operationValue, "NUMBR")
                             if(result.ifSuccess):
-                                operationValue = result.value
+                                operationValue = get_actual_value(result.value)
                             else:
                                 add_error_result_text(typecast_error(result.value, operationResultType), ErrorLineNumber)
 
@@ -737,8 +779,171 @@ def grammar_binary_exp(lexemeList):
 
     #return fail
     return set_grammar("binary_exp", ErrorLineNumber, lexemeList, False, False, False, None)
-    
 
+# Function that checks grammar of infinite_arity_expr_end2
+# Returns GrammarResult
+def grammar_infinite_arity_expr_end2(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("infinite_arity_expr_end2", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    # match with an, then expr
+    if (lexemeList[0].classification == "Expression AND Operator"):
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            add_error_result_text(GrammarInfiniteArityExpNoOperand, ErrorLineNumber)
+
+            return set_grammar("infinite_arity_expr", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+        
+        grammarBoolExpResult = grammar_infinite_arity_expr_operand(lexemeList)
+
+        #if grammar fit bool_expr
+        if (if_grammar_has_error(grammarBoolExpResult) or if_grammar_matched(grammarBoolExpResult)): #if error or success
+            return grammarBoolExpResult
+
+    # return fail
+    return set_grammar("infinite_arity_expr_end2", ErrorLineNumber, lexemeList, False, False, False, None)
+    
+# Function that checks grammar of infinite_arity_expr_end1 
+# Returns GrammarResult
+def grammar_infinite_arity_expr_end1(lexemeList, operatorValue, operationValue):
+    global ResultText
+    global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("infinite_arity_expr_end1", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    while True: #loop as long as it matches grammar for infinite_arity_expr_end2
+        grammarInfiniteArityExprEnd2Result: GrammarResult = grammar_infinite_arity_expr_end2(lexemeList)
+
+        if(if_grammar_matched(grammarInfiniteArityExprEnd2Result)): #if successful
+            if(operatorValue == "ALL OF"): #update operation value
+                operationValue = operationValue and grammarInfiniteArityExprEnd2Result.value
+            elif(operatorValue == "AND OF"):
+                operationValue = operationValue or grammarInfiniteArityExprEnd2Result.value
+            continue
+
+        break
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("infinite_arity_expr_end1", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if (lexemeList[0].classification == "Infinite Arity Delimiter End"): #check if ended with a delimiter
+        lexemeList.pop(0)
+        return set_grammar("infinite_arity_expr_end2", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+    else:
+        add_error_result_text(GrammarInfiniteArityMKAYKeyword, ErrorLineNumber)
+
+        # return fail
+        return set_grammar("infinite_arity_expr_end1", ErrorLineNumber, lexemeList, False, False, False, None)
+
+# Function that checks grammar of infinite_arity_expr
+# Returns GrammarResult
+def grammar_infinite_arity_expr(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    grammarResult = GrammarResult("", -1, [], False, False, False, None)
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("infinite_arity_expr", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if(lexemeList[0].classification == "Infinite Boolean Operator"):
+        operationValue = None
+        operatorValue = lexemeList[0].string
+
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            add_error_result_text(GrammarBinaryExpNoOperand, ErrorLineNumber)
+
+            return set_grammar("infinite_arity_expr", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        grammarInfiniteArityExprOperand1Result = grammar_infinite_arity_expr_operand(lexemeList)
+
+        #if grammar fit bool_expr
+        if (if_grammar_has_error(grammarInfiniteArityExprOperand1Result)): #if error
+            return grammarInfiniteArityExprOperand1Result
+        elif (if_grammar_matched(grammarInfiniteArityExprOperand1Result)): #if successful
+            #check if lexeme list is empty before checking for further matches
+            if(lexeme_list_is_empty(lexemeList)):
+                add_error_result_text(GrammarInfiniteArityExpNoOperand, ErrorLineNumber)
+
+                return set_grammar("infinite_arity_expr", ErrorLineNumber, lexemeList, True, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            lexemeList.pop(0)
+
+            grammarInfiniteArityExprOperand2Result = grammar_infinite_arity_expr_operand(lexemeList)
+
+            #if grammar fit binary_exp
+            if (if_grammar_has_error(grammarInfiniteArityExprOperand2Result)): #if error
+                return grammarInfiniteArityExprOperand2Result
+            elif (if_grammar_matched(grammarInfiniteArityExprOperand2Result)): #if successful
+                #parse the results given the operator and the values of the operands
+                firstOperandType = return_data_type(grammarInfiniteArityExprOperand1Result.value)
+                secondOperandType = return_data_type(grammarInfiniteArityExprOperand2Result.value)
+
+                firstOperand = typecast_value(grammarInfiniteArityExprOperand1Result.value, "TROOF")
+                secondOperand = typecast_value(grammarInfiniteArityExprOperand2Result.value, "TROOF")
+                
+                if(firstOperand.ifSuccess == False or secondOperand.ifSuccess == False):
+                    if(firstOperand.ifSuccess == False):
+                        add_error_result_text(typecast_error(grammarInfiniteArityExprOperand1Result.value, "TROOF"), ErrorLineNumber)
+                    elif(secondOperand.ifSuccess == False):
+                        add_error_result_text(typecast_error(grammarInfiniteArityExprOperand2Result.value, "TROOF"), ErrorLineNumber)
+
+                    return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
+                    #TODO changed to symbol error true due to error in typecast
+                
+                firstOperand = get_actual_value(firstOperand.value)
+                secondOperand = get_actual_value(secondOperand.value)
+                    
+                #if no error in typecast, proceed with operation
+                if(operatorValue == "ALL OF"):
+                    operationValue = firstOperand and secondOperand
+                elif(operatorValue == "AND OF"):
+                    operationValue = firstOperand or secondOperand
+
+                #should match infinite_arity_expr_end1 or else fail
+                grammarInfiniteArityExprEnd1Result: GrammarResult = grammar_infinite_arity_expr_end1(lexemeList, operatorValue, operationValue)
+
+                if(if_grammar_has_error(grammarInfiniteArityExprEnd1Result)): #if a syntax or symbol error occurred 
+                    #return fail
+                    return grammarInfiniteArityExprEnd1Result
+                
+                if(if_grammar_matched(grammarInfiniteArityExprEnd1Result) and grammarInfiniteArityExprEnd1Result.value != None):
+                    #if success, update operation value
+                    operationValue = grammarInfiniteArityExprEnd1Result.value
+
+                #typecast value back to TROOF
+                operationValue = typecast_value(operationValue, "TROOF")
+
+                if(operationValue.ifSuccess == False):
+                    add_error_result_text(typecast_error(operationValue.value, "TROOF"), ErrorLineNumber)
+                    return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
+                
+                operationValue = operationValue.value
+
+                return set_grammar("infinite_arity_expr", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+                    
+
+    return set_grammar("infinite_arity_expr", ErrorLineNumber, lexemeList, False, False, False, None)
 
 
 # Function that checks grammar of bool_expr
@@ -800,6 +1005,64 @@ def grammar_bool_expr(lexemeList):
     return grammarResult
 
 
+# Function that checks grammar of infinite_arity_expr_operand
+# Returns GrammarResult
+def grammar_infinite_arity_expr_operand(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    grammarResult = GrammarResult("", -1, [], False, False, True, None)
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("infinite_arity_expr_operand", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    #match with binary_exp
+    grammarBinaryExpResult: GrammarResult = grammar_binary_exp(lexemeList)
+
+    #if grammar fit input
+    if(if_grammar_has_error(grammarBinaryExpResult) or if_grammar_matched(grammarBinaryExpResult)): #if a syntax or symbol error occurred, or if successful
+        return grammarBinaryExpResult
+
+    #match with NOT lexeme
+    if(lexemeList[0].classification == "Not Boolean Operator"):
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("infinite_arity_expr_operand", ErrorLineNumber, lexemeList, False, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        grammarInfiniteArityExprOperandResult = grammar_infinite_arity_expr_operand(lexemeList)
+
+        #if grammar fit expr
+        if(if_grammar_has_error(grammarInfiniteArityExprOperandResult)):
+            return grammarInfiniteArityExprOperandResult
+        elif(if_grammar_matched(grammarInfiniteArityExprOperandResult)):
+            firstOperandType = return_data_type(grammarInfiniteArityExprOperandResult.value)
+
+            firstOperand = grammarInfiniteArityExprOperandResult.value
+
+            if(firstOperandType != "TROOF"):
+                firstOperand = typecast_value(firstOperand, "TROOF")
+
+            if(firstOperand.ifSuccess == False):
+                add_error_result_text(typecast_error(grammarInfiniteArityExprOperandResult.value, "TROOF"), ErrorLineNumber)
+
+                return set_grammar("infinite_arity_expr_operand", ErrorLineNumber, lexemeList, True, True, True, operationValue)
+                #TODO changed to symbol error true due to error in typecast
+            
+            firstOperand = firstOperand.value
+
+            operationValue = not firstOperand
+
+            return set_grammar("infinite_arity_expr_operand", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+
+    #default error catch if it did not match any
+    grammarResult = GrammarResult("infinite_arity_expr_operand", ErrorLineNumber, lexemeList, False, False, False, None)
+    return grammarResult
+
 # Function that checks grammar of expr
 # Returns GrammarResult
 def grammar_expr(lexemeList):
@@ -819,7 +1082,12 @@ def grammar_expr(lexemeList):
     #if grammar fit input
     if(if_grammar_has_error(grammarBoolExpResult) or if_grammar_matched(grammarBoolExpResult)): #if a syntax or symbol error occurred, or if successful
         return grammarBoolExpResult
-    #TODO match with infinite arity expr
+
+    #match with infinite arity expr
+    grammarInfiniteArityExpr: GrammarResult = grammar_infinite_arity_expr(lexemeList)
+
+    if(if_grammar_has_error(grammarInfiniteArityExpr) or if_grammar_matched(grammarInfiniteArityExpr)): #if a syntax or symbol error occurred, or if successful
+        return grammarInfiniteArityExpr
 
     #default error catch if it did not match any
     grammarResult = GrammarResult("stmt2", ErrorLineNumber, lexemeList, False, False, False, None)
@@ -895,10 +1163,10 @@ def grammar_stmt(lexemeList: list):
 
             if(if_grammar_has_error(grammarStmtResult) or if_grammar_matched(grammarStmtResult)): #if it matched
                 return grammarStmtResult
-        else:
-            add_error_result_text(GrammarErrorNewLineMissing, ErrorLineNumber)
+        # else:
+        #     add_error_result_text(GrammarErrorNewLineMissing, ErrorLineNumber)
 
-            return set_grammar("stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+        #     return set_grammar("stmt", ErrorLineNumber, lexemeList, True, False, False, None)
 
     #TODO should we accept HAI THX only? change how error is parsed, based on grammar tho
     # change grammar if we'll accept HAI THX, for now don't accept HAI THX only
