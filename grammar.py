@@ -602,7 +602,13 @@ def grammar_binary_math_operator(lexemeList):
 
                     if(operationResultType == "NEITHER"): #parse to numbr if possible
                         if(((operationValue * 10) % 10) == 0):
-                            operationValue = typecast_value(operationValue, "NUMBR")
+                            result = typecast_value(operationValue, "NUMBR")
+                            if(result.ifSuccess):
+                                operationValue = result.value
+                            else:
+                                add_error_result_text(typecast_error(result.value, operationResultType), ErrorLineNumber)
+
+                                return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
 
                     #return success
 
