@@ -4,7 +4,7 @@ from objectDefinition import *
 #Accepts an array of lexemes
 #Prints each lexeme
 def print_lexeme_list(lexemeList):
-    print("\n**********************\n")
+    print("\n*******LEX***********\n")
     if(len(lexemeList) == 0):
         print("List is EMPTY\n")
 
@@ -14,6 +14,21 @@ def print_lexeme_list(lexemeList):
         print("String: ", lexeme.string)
         print("Classification: ", lexeme.classification)
         print("Line Number: ", lexeme.lineNumber)
+    print("\n**********************\n")
+
+#Function that prints all symbols in an array
+#Accepts an array of symbols
+#Prints each symbol
+def print_symbol_list(symbolList):
+    print("\n*******SYM**********\n")
+    if(len(symbolList) == 0):
+        print("List is EMPTY\n")
+
+    for counter in range(len(symbolList)): #iterate over the length of the symbol list
+        symbol = symbolList[counter]
+        print("\nCount: ", counter)
+        print("Identifier: ", symbol.identifier)
+        print("Value: ", symbol.value)
     print("\n**********************\n")
         
 
