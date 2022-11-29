@@ -495,26 +495,108 @@ def grammar_literal(lexemeList):
     
     return grammarResult
 
-# # Function that checks grammar of binary_bool_operator
-# # Returns GrammarResult
-# def grammar_bool_operator(lexemeList):
-#     global ResultText
-#     global ErrorLineNumber
+# Function that checks grammar of binary_bool_operator
+# Returns GrammarResult
+def grammar_binary_bool_operator(lexemeList):
+    global ResultText
+    global ErrorLineNumber
 
-#     #check if lexeme list is empty before checking for further matches
-#     if(lexeme_list_is_empty(lexemeList)):
-#         return set_grammar("bool_operator", ErrorLineNumber, lexemeList, False, False, False, None)
-#     ErrorLineNumber = lexemeList[0].lineNumber
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
 
-#     if(lexemeList[0].classification == "Boolean Operator"):
-#         operationValue = None
-#         operatorValue = lexemeList[0].string
+    if(lexemeList[0].classification == "Boolean Operator"):
+        operationValue = None
+        operatorValue = lexemeList[0].string
 
-#         lexemeList.pop(0)
+        lexemeList.pop(0)
 
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            add_error_result_text(GrammarBinaryExpNoOperand, ErrorLineNumber)
 
+            return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
 
-#     return set_grammar("bool_operator", ErrorLineNumber, lexemeList, False, False, False, None)
+        # check if operator value is NOT
+        if(operatorValue == "NOT"):
+            grammarBinaryExp1Result = grammar_binary_exp(lexemeList)
+
+            #if grammar fit binary_exp
+            if (if_grammar_has_error(grammarBinaryExp1Result)): #if error
+                return grammarBinaryExp1Result
+            elif (if_grammar_matched(grammarBinaryExp1Result)): #if successful
+                firstOperandType = return_data_type(grammarBinaryExp1Result.value)
+
+                firstOperand = grammarBinaryExp1Result.value
+
+                if(firstOperandType != "TROOF"):
+                    firstOperand = typecast_value(firstOperand, "TROOF")
+
+                if(firstOperand.ifSuccess == False):
+                    add_error_result_text(typecast_error(grammarBinaryExp1Result.value, "TROOF"), ErrorLineNumber)
+
+                    return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
+                    #TODO changed to symbol error true due to error in typecast
+                
+                firstOperand = firstOperand.value
+
+                operationValue = not firstOperand
+
+                return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+        else:
+            grammarBinaryExp1Result = grammar_binary_exp(lexemeList)
+
+            #if grammar fit binary_exp
+            if (if_grammar_has_error(grammarBinaryExp1Result)): #if error
+                return grammarBinaryExp1Result
+
+            elif (if_grammar_matched(grammarBinaryExp1Result)): #if successful
+                if(lexemeList[0].classification == "Expression AND Operator"):
+                    lexemeList.pop(0)
+
+                    grammarBinaryExp2Result = grammar_binary_exp(lexemeList)
+
+                    #if grammar fit binary_exp
+                    if (if_grammar_has_error(grammarBinaryExp2Result)): #if error
+                        return grammarBinaryExp2Result
+                    elif (if_grammar_matched(grammarBinaryExp2Result)): #if successful
+                        #parse the results given the operator and the values of the operands
+                        firstOperandType = return_data_type(grammarBinaryExp1Result.value)
+                        secondOperandType = return_data_type(grammarBinaryExp2Result.value)
+
+                        firstOperand = grammarBinaryExp1Result.value
+                        secondOperand = grammarBinaryExp2Result.value
+
+                        if(firstOperandType != "TROOF" or secondOperandType != "TROOF"):
+                            firstOperand = typecast_value(firstOperand, "TROOF")
+                            secondOperand = typecast_value(secondOperand, "TROOF")
+                        
+                        if(firstOperand.ifSuccess == False or secondOperand.ifSuccess == False):
+                            if(firstOperand.ifSuccess == False):
+                                add_error_result_text(typecast_error(grammarBinaryExp1Result.value, "TROOF"), ErrorLineNumber)
+                            elif(secondOperand.ifSuccess == False):
+                                add_error_result_text(typecast_error(grammarBinaryExp2Result.value, "TROOF"), ErrorLineNumber)
+
+                            return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
+                            #TODO changed to symbol error true due to error in typecast
+                        
+                        firstOperand = firstOperand.value
+                        secondOperand = secondOperand.value
+                            
+                        #if no error in typecast, proceed with operation
+                        if(operatorValue == "BOTH OF"):
+                            operationValue = firstOperand and secondOperand
+                        elif(operatorValue == "EITHER OF"):
+                            operationValue = firstOperand or secondOperand
+                        elif(operatorValue == "WON OF"):
+                            operationValue = (firstOperand and not secondOperand) or (not firstOperand and secondOperand)
+
+                        #return success
+                        return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+
+    return set_grammar("bool_operator", ErrorLineNumber, lexemeList, False, False, False, None)
 
 # Function that checks grammar of binary_math_operator
 # Returns GrammarResult
@@ -584,7 +666,9 @@ def grammar_binary_math_operator(lexemeList):
                         elif(secondOperand.ifSuccess == False):
                             add_error_result_text(typecast_error(grammarBinaryExp2Result.value, operationResultType), ErrorLineNumber)
 
-                        return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+                        return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
+                        #TODO check if symbol error is supposed to be false, this is an error
+                        #changed to True
                     
                     firstOperand = firstOperand.value
                     secondOperand = secondOperand.value
@@ -658,7 +742,11 @@ def grammar_binary_exp(lexemeList):
     if(if_grammar_has_error(grammarMathOperatorResult) or if_grammar_matched(grammarMathOperatorResult)): #if a syntax or symbol error occurred, or if successful
         return grammarMathOperatorResult
 
-    #binary_boolean_op binary_exp "an" binary_exp
+    #if grammar fit binary_bool_operator
+    grammarBoolOperatorResult: GrammarResult = grammar_binary_bool_operator(lexemeList)
+
+    if(if_grammar_has_error(grammarBoolOperatorResult) or if_grammar_matched(grammarBoolOperatorResult)): #if a syntax or symbol error occurred, or if successful
+        return grammarBoolOperatorResult
 
     #return fail
     return set_grammar("binary_exp", ErrorLineNumber, lexemeList, False, False, False, None)
