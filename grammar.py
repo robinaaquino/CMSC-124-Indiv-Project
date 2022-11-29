@@ -63,20 +63,25 @@ def typecast_value(value, newDataType):
     #convert value
     if (newDataType == "TROOF"): #convert value to troof
         if (dataTypeOfValue == "NOOB"): #if from noob
-            return TypecastResult("FAIL", True)
+            return TypecastResult(False, True)
         elif (dataTypeOfValue == "NUMBR" or dataTypeOfValue == "NUMBAR"): #if from numbr and numbar
             if (value != 0):
-                return TypecastResult("WIN", True)
+                return TypecastResult(True, True)
             else:
-                return TypecastResult("FAIL", True)
+                return TypecastResult(False, True)
         elif (dataTypeOfValue == "YARN"): #if from yarn
             value = value[1:-1] #remove quotations
             if(len(value) == 0):
-                return TypecastResult("FAIL", True)
+                return TypecastResult(False, True)
             else: 
-                return TypecastResult("WIN", True)
+                return TypecastResult(True, True)
         elif (dataTypeOfValue == "TROOF"):
-            return TypecastResult(value, True)
+            if(value == "WIN"):
+                return TypecastResult(True, True)
+            elif(value == "FAIL"):
+                return TypecastResult(False, True)
+            else:
+                return TypecastResult(value, False)
     elif (newDataType == "NUMBAR"): #convert value to numbar
         if (dataTypeOfValue == "NOOB"):
             return TypecastResult(0.0, True)
