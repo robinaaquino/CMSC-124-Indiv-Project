@@ -19,6 +19,9 @@ GrammarBinaryExpNoOperand = "No operands for expression"
 GrammarInfiniteArityExpNoOperand = "No operands for infinite arity"
 GrammarExprNoAnKeyword = "Missing AN keyword"
 GrammarInfiniteArityMKAYKeyword = "Missing MKAY keyword"
+GrammarComparisonOperationUnequalValue = "Unequal value for first operand"
+GrammarComparisonOperationParseError = "Error in parsing expression"
+
 
 # Utility Error Codes
 GrammarErrorEmptyLexemeList = "Lexeme list is empty"
