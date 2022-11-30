@@ -924,6 +924,166 @@ def grammar_infinite_arity_expr(lexemeList):
 
     return set_grammar("infinite_arity_expr", ErrorLineNumber, lexemeList, False, False, False, None)
 
+# Function that checks grammar of comparison_operator
+# Returns GrammarResult
+def grammar_comparison_operator(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    grammarResult = GrammarResult("", -1, [], False, False, True, None)
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if(lexemeList[0].classification == "Comparison Operator"):
+        operationValue = None
+        operatorValue = lexemeList[0].string
+
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            add_error_result_text(GrammarBinaryExpNoOperand, ErrorLineNumber)
+
+            #return error due to matching some lexeme but not all
+            return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        grammarExp1Result = grammar_expr(lexemeList)
+
+        #TODO consider only having if_grammar_matched, and just returning error with expression with an else or as a catch
+
+        #if grammar fit exp
+        if (if_grammar_has_error(grammarExp1Result)): #if error
+            return grammarExp1Result
+            
+        elif (if_grammar_matched(grammarExp1Result)):
+
+            #check if lexeme list is empty before checking for further matches
+            if(lexeme_list_is_empty(lexemeList)):
+                add_error_result_text(GrammarExprNoAnKeyword, ErrorLineNumber)
+
+                return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            #match with an
+            if(lexemeList[0].classification == "Expression AND Operator"):
+                lexemeList.pop(0)
+
+                #check if lexeme list is empty before checking for further matches
+                if(lexeme_list_is_empty(lexemeList)):
+                    add_error_result_text(GrammarBinaryExpNoOperand, ErrorLineNumber)
+
+                    return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+                ErrorLineNumber = lexemeList[0].lineNumber
+
+                if(lexemeList[0].classification == "Comparison Math Operator"): #parse as relational operations
+                    relationalOperatorValue = lexemeList[0].string
+                    lexemeList.pop(0)
+
+                    #check if lexeme list is empty before checking for further matches
+                    if(lexeme_list_is_empty(lexemeList)):
+                        add_error_result_text(GrammarBinaryExpNoOperand, ErrorLineNumber)
+
+                        return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+                    ErrorLineNumber = lexemeList[0].lineNumber
+
+                    #check for expr, should be equal to grammarExp1Result
+                    grammarExp1RelationalResult = grammar_expr(lexemeList)
+
+                    if (if_grammar_has_error(grammarExp1RelationalResult)): #if error
+                        return grammarExp1RelationalResult
+                    elif (if_grammar_matched(grammarExp1RelationalResult)):
+                        #check if lexeme list is empty before checking for further matches
+                        if(lexeme_list_is_empty(lexemeList)):
+                            add_error_result_text(GrammarExprNoAnKeyword, ErrorLineNumber)
+
+                            return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+                        ErrorLineNumber = lexemeList[0].lineNumber
+
+                        #if current value is not equivalent to previous value, return error
+                        if(grammarExp1RelationalResult.value != grammarExp1Result.value):
+                            add_error_result_text(GrammarComparisonOperationUnequalValue, ErrorLineNumber)
+                            return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+
+                        #if equal, check for AN
+                        if(lexemeList[0].classification == "Expression AND Operator"):
+                            lexemeList.pop(0)
+
+                            #check if lexeme list is empty before checking for further matches
+                            if(lexeme_list_is_empty(lexemeList)):
+                                add_error_result_text(GrammarBinaryExpNoOperand, ErrorLineNumber)
+
+                                return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+                            ErrorLineNumber = lexemeList[0].lineNumber
+
+                            #check for second operand
+                            grammarExp2RelationalResult = grammar_expr(lexemeList)
+                            
+                            if (if_grammar_has_error(grammarExp2RelationalResult)): #if error
+                                return grammarExp2RelationalResult
+                            elif (if_grammar_matched(grammarExp2RelationalResult)): #parse the result
+                                firstOperand = grammarExp1RelationalResult.value
+                                secondOperand = grammarExp2RelationalResult.value
+
+                                try:
+                                    #check for comparison operator
+                                    if(operatorValue == "BOTH SAEM"):
+                                        #check for relational operations
+                                        if(relationalOperatorValue == "BIGGR OF"):
+                                            operationValue = firstOperand >= secondOperand
+                                        elif(relationalOperatorValue == "SMALLR OF"):
+                                            operationValue = firstOperand <= secondOperand
+                                    elif(operatorValue == "DIFFRINT"):
+                                        #check for relational operations
+                                        if(relationalOperatorValue == "BIGGR OF"):
+                                            operationValue = firstOperand > secondOperand
+                                        elif(relationalOperatorValue == "SMALLR OF"):
+                                            operationValue = firstOperand < secondOperand
+                                except: #if error in value, return error
+                                    add_error_result_text(GrammarComparisonOperationParseError, ErrorLineNumber)
+
+                                    return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
+
+                                #return success
+                                return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+        
+                        #return fail, expected an
+                        else:
+                            add_error_result_text(GrammarExprNoAnKeyword, ErrorLineNumber)
+
+                            return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+
+                else: #parse as equality or inequality
+                    grammarExp2Result = grammar_expr(lexemeList)
+
+                    if(if_grammar_matched(grammarExp2Result)): #if success, parse result with no typecasting
+                        firstOperand = grammarExp1Result.value
+                        secondOperand = grammarExp2Result.value
+
+                        try:
+                            if(operatorValue == "BOTH SAEM"):
+                                operationValue = firstOperand == secondOperand
+                            elif(operatorValue == "DIFFRINT"):
+                                operationValue = firstOperand != secondOperand
+                        except: #if error in value, return error
+                            add_error_result_text(GrammarComparisonOperationParseError, ErrorLineNumber)
+
+                            return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
+
+                        #return success
+                        return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+
+                    elif(if_grammar_has_error(grammarExp2Result)): #if there's an error
+                        return grammarExp2Result
+
+                
+                return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, True, False, False, None)
+
+    #return unmatched for current grammar  
+    return set_grammar("comparison_operator", ErrorLineNumber, lexemeList, False, False, False, None)
 
 # Function that checks grammar of bool_expr
 # Returns GrammarResult
@@ -982,7 +1142,6 @@ def grammar_bool_expr(lexemeList):
     #default error catch if it did not match any
     grammarResult = GrammarResult("bool_expr", ErrorLineNumber, lexemeList, False, False, False, None)
     return grammarResult
-
 
 # Function that checks grammar of infinite_arity_expr_operand
 # Returns GrammarResult
@@ -1067,6 +1226,12 @@ def grammar_expr(lexemeList):
 
     if(if_grammar_has_error(grammarInfiniteArityExpr) or if_grammar_matched(grammarInfiniteArityExpr)): #if a syntax or symbol error occurred, or if successful
         return grammarInfiniteArityExpr
+
+    #match with comparison operations
+    grammarComparisonOperationsResult: GrammarResult = grammar_comparison_operator(lexemeList)
+
+    if(if_grammar_has_error(grammarComparisonOperationsResult) or if_grammar_matched(grammarComparisonOperationsResult)): #if a syntax or symbol error occurred, or if successful
+        return grammarComparisonOperationsResult
 
     #default error catch if it did not match any
     grammarResult = GrammarResult("stmt2", ErrorLineNumber, lexemeList, False, False, False, None)
