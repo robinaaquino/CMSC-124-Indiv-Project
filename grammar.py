@@ -155,66 +155,66 @@ def grammar_print(lexemeList):
 
     # else syntax error..? NO SYNTAX ERROR BECAUSE IT DIDNT MATCH FIRST KEYWORD FOR STATEMENT
 
-# Function that checks grammar of multiline_cmt2
-# Returns GrammarResult
-#TODO change grammar in word, does not need linebreak
-def grammar_multiline_cmt2(lexemeList):
-    global ResultText
-    global ErrorLineNumber
+# # Function that checks grammar of multiline_cmt2
+# # Returns GrammarResult
+# #TODO change grammar in word, does not need linebreak
+# def grammar_multiline_cmt2(lexemeList):
+#     global ResultText
+#     global ErrorLineNumber
 
-    #check if lexeme list is not empty
-    if(lexeme_list_is_empty(lexemeList)):
-        return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, False, False, False, None)
-    ErrorLineNumber = lexemeList[0].lineNumber
+#     #check if lexeme list is not empty
+#     if(lexeme_list_is_empty(lexemeList)):
+#         return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, False, False, False, None)
+#     ErrorLineNumber = lexemeList[0].lineNumber
 
-    #should match multiple comment lexemes
-    while(lexemeList[0].classification == "Comment"):
-        lexemeList.pop(0)
+#     #should match multiple comment lexemes
+#     while(lexemeList[0].classification == "Comment"):
+#         lexemeList.pop(0)
 
-        if(lexeme_list_is_empty(lexemeList)):
-            return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, False, False, None)
-        ErrorLineNumber = lexemeList[0].lineNumber
+#         if(lexeme_list_is_empty(lexemeList)):
+#             return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, False, False, None)
+#         ErrorLineNumber = lexemeList[0].lineNumber
 
-    #if not matched with a comment, check if multiline_cmt2 end delimiter is there
-    if(lexemeList[0].classification == "Multi-line Comment Delimiter End"):
-        lexemeList.pop(0)
+#     #if not matched with a comment, check if multiline_cmt2 end delimiter is there
+#     if(lexemeList[0].classification == "Multi-line Comment Delimiter End"):
+#         lexemeList.pop(0)
 
-        #return success
-        return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, True, False, None)
+#         #return success
+#         return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, True, False, None)
     
-    else: #should have multi line comment delimiter end
-        add_error_result_text(GrammarErrorMultilineCommentNoDelimiterEnd, ErrorLineNumber)
+#     else: #should have multi line comment delimiter end
+#         add_error_result_text(GrammarErrorMultilineCommentNoDelimiterEnd, ErrorLineNumber)
 
-        return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, False, False, None)
+#         return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, False, False, None)
 
-# Function that checks grammar of multiline_cmt
-# Returns GrammarResult
-def grammar_multiline_cmt(lexemeList):
-    global ResultText
-    global ErrorLineNumber
+# # Function that checks grammar of multiline_cmt
+# # Returns GrammarResult
+# def grammar_multiline_cmt(lexemeList):
+#     global ResultText
+#     global ErrorLineNumber
 
-    grammarResult = GrammarResult("", -1, [], False, False, True, None)
+#     grammarResult = GrammarResult("", -1, [], False, False, True, None)
 
-    if(lexeme_list_is_empty(lexemeList)):
-        return set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, False, False, False, None)
-    ErrorLineNumber = lexemeList[0].lineNumber
+#     if(lexeme_list_is_empty(lexemeList)):
+#         return set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, False, False, False, None)
+#     ErrorLineNumber = lexemeList[0].lineNumber
 
-    if(lexemeList[0].classification == "Multi-line Comment Delimiter Start"):
-        lexemeList.pop(0)
+#     if(lexemeList[0].classification == "Multi-line Comment Delimiter Start"):
+#         lexemeList.pop(0)
 
-        # check if lexeme list is empty before checking for further matches
-        if(lexeme_list_is_empty(lexemeList)):
-            return set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, True, False, False, None)
-        ErrorLineNumber = lexemeList[0].lineNumber
+#         # check if lexeme list is empty before checking for further matches
+#         if(lexeme_list_is_empty(lexemeList)):
+#             return set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, True, False, False, None)
+#         ErrorLineNumber = lexemeList[0].lineNumber
 
-        grammarMultilineCmt2Result = grammar_multiline_cmt2(lexemeList)
+#         grammarMultilineCmt2Result = grammar_multiline_cmt2(lexemeList)
 
-        return grammarMultilineCmt2Result
-    else:
-        #should syntax error be true if ifFirstLexemeMatched is false
-        grammarResult = set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, False, False, False, None)
+#         return grammarMultilineCmt2Result
+#     else:
+#         #should syntax error be true if ifFirstLexemeMatched is false
+#         grammarResult = set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, False, False, False, None)
 
-    return grammarResult
+#     return grammarResult
 
 # Function that checks grammar of input
 # Returns GrammarResult
@@ -1085,11 +1085,12 @@ def grammar_stmt2(lexemeList):
     if(if_grammar_has_error(grammarInputResult) or if_grammar_matched(grammarInputResult)): #if a syntax or symbol error occurred, or if successful
         return grammarInputResult
 
+    #TODO have to fix the error in lexemes, to not consider new line as comment
     #check if grammar fit multiline comment
-    grammarMultilineCommentResult: GrammarResult = grammar_multiline_cmt(lexemeList)
+    # grammarMultilineCommentResult: GrammarResult = grammar_multiline_cmt(lexemeList)
 
-    if(if_grammar_has_error(grammarMultilineCommentResult) or if_grammar_matched(grammarMultilineCommentResult)): #if a syntax or symbol error occured, or if successful
-        return grammarMultilineCommentResult
+    # if(if_grammar_has_error(grammarMultilineCommentResult) or if_grammar_matched(grammarMultilineCommentResult)): #if a syntax or symbol error occured, or if successful
+    #     return grammarMultilineCommentResult
 
     #check if grammar fit variable assignment
     grammarVariableAssignmentResult: GrammarResult = grammar_variable_assignment(lexemeList)
