@@ -1125,7 +1125,8 @@ def grammar_stmt(lexemeList: list):
     #     return grammarStmt2Result
 
     if(if_grammar_has_error(grammarStmt2Result)): #if it resulted in error
-        add_error_result_text(GrammarErrorStmt2NoAbstractionMatch, ErrorLineNumber)
+        if(ResultText == ""):
+            add_error_result_text(GrammarErrorStmt2NoAbstractionMatch, ErrorLineNumber)
 
         return grammarStmt2Result
     elif(if_grammar_matched(grammarStmt2Result)): #if it matched with stmt2, check for other abstractions
