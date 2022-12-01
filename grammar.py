@@ -1457,7 +1457,22 @@ def grammar_stmt2(lexemeList):
     #check if grammar fit expr
     grammarExprResult: GrammarResult = grammar_expr(lexemeList)
 
-    if(if_grammar_has_error(grammarExprResult) or if_grammar_matched(grammarExprResult)): #if a syntax or symbol error occured, or if successful
+    if(if_grammar_has_error(grammarExprResult)): #if a syntax or symbol error occured
+        return grammarExprResult
+    elif(if_grammar_matched(grammarExprResult)): #if it matched as lone statement
+        foundIdentifier = False
+        #check if identifier exists in symbol table
+        for symbolCounter in range(len(ListOfSymbols)):
+            symbol = ListOfSymbols[symbolCounter]
+
+            #set the value of the previous identifier
+            if(symbol.identifier == "IT"):
+                ListOfSymbols[symbolCounter].value = grammarExprResult.value
+                foundIdentifier = True
+
+        if(foundIdentifier == False): #if identifier not found, implement
+            ListOfSymbols.append(Symbol("IT", grammarExprResult.value))
+
         return grammarExprResult
 
     #default grammar error result if it does NOT fit ANY abstractions at all for smt2
