@@ -21,6 +21,8 @@ GrammarExprNoAnKeyword = "Missing AN keyword"
 GrammarInfiniteArityMKAYKeyword = "Missing MKAY keyword"
 GrammarComparisonOperationUnequalValue = "Unequal value for first operand"
 GrammarComparisonOperationParseError = "Error in parsing expression"
+GrammarCondStmtMissingElseKeyword = "Missing NO WAI keyword"
+GrammarCondStmtMissingDelimiterEndKeyword = "Missing OIC keyword"
 
 
 # Utility Error Codes
