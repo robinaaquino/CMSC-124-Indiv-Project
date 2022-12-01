@@ -1341,10 +1341,19 @@ def grammar_cond_stmt(lexemeList):
                                     ErrorLineNumber = lexemeList[0].lineNumber
 
                                     break
+                                elif(lexemeList[0].classification == "Conditional Delimiter End"): 
+                                    lexemeList.pop(0)
+
+                                    #check if lexeme list is empty before checking for further statements, still a success for grammar
+                                    if(lexeme_list_is_empty(lexemeList)):
+                                        return set_grammar("cond_stmt", ErrorLineNumber, lexemeList, True, True, False, None)
+                                    ErrorLineNumber = lexemeList[0].lineNumber
+
+                                    return set_grammar("cond_stmt", ErrorLineNumber, lexemeList, True, True, False, None)
 
                                 ifListOfLexeme.append(lexemeList[0])
                                 lexemeList.pop(0)
-
+                                
                             if(troofValue == "WIN"):
                                 grammarIfStmtResult: GrammarResult = grammar_stmt(ifListOfLexeme)
 
@@ -1368,17 +1377,10 @@ def grammar_cond_stmt(lexemeList):
                                     ErrorLineNumber = lexemeList[0].lineNumber
                                         
                                     elseListOfLexeme = []
-                                    # while(lexeme_list_is_empty(lexemeList) != True and lexemeList[0].classification != "Conditional Delimiter End"): #only break when conditional delimiter is found
-                                    #     elseListOfLexeme.append(lexemeList[0])
-                                    #     lexemeList.pop(0)
-
-                                    # if(lexeme_list_is_empty(lexemeList) == True): #if lexeme is not found, return error
-                                    #     # break
-                                    #     return set_grammar("cond_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
                                     while(lexeme_list_is_empty(lexemeList) == False):
                                         if(lexemeList[0].classification == "Conditional Delimiter End"): 
 
-                                            #check if lexeme list is empty before checking for further statements, still a success for grammar
+                                            #check if lexeme list is empty before checking for further statements
                                             if(lexeme_list_is_empty(lexemeList)):
                                                 return set_grammar("cond_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
                                             ErrorLineNumber = lexemeList[0].lineNumber
