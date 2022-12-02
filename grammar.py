@@ -201,7 +201,7 @@ def grammar_output(lexemeList):
         if(lexeme_list_is_empty(lexemeList)):
             add_error_result_text(GrammarBinaryExpNoOperand, ErrorLineNumber)
 
-            return set_grammar("infinite_arity_expr", ErrorLineNumber, lexemeList, True, False, False, None)
+            return set_grammar("output", ErrorLineNumber, lexemeList, True, False, False, None)
         ErrorLineNumber = lexemeList[0].lineNumber
 
         #check if grammar fit output_args
@@ -275,6 +275,108 @@ def grammar_output(lexemeList):
 #         grammarResult = set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, False, False, False, None)
 
 #     return grammarResult
+
+# Function that checks grammar of an_yarn
+# Returns GrammarResult
+def grammar_an_yarn(lexemeList, operationValue):
+    global ResultText
+    global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("an_yarn", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if(lexemeList[0].classification == "Expression AND Operator"):
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("an_yarn", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        #check if grammar fit expr
+        grammarExprResult: GrammarResult = grammar_expr(lexemeList)
+
+        if(if_grammar_has_error(grammarExprResult)): #if a syntax or symbol error occured
+            return grammarExprResult
+        elif(if_grammar_matched(grammarExprResult)):
+            print_lexeme_list(lexemeList)
+            typecastedValue = typecast_value(grammarExprResult.value, "YARN")
+
+            if(typecastedValue.ifSuccess):
+                operationValue += typecastedValue.value[1:-1]
+                
+                #check if lexeme list is empty before checking for further matches
+                if(lexeme_list_is_empty(lexemeList)):
+                    return set_grammar("an_yarn", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+                ErrorLineNumber = lexemeList[0].lineNumber
+
+                if(lexemeList[0].classification == "New Line"):
+                    return set_grammar("an_yarn", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+            else:
+                return set_grammar("an_yarn", ErrorLineNumber, lexemeList, True, False, False, operationValue)
+
+    #check if grammar fit output_args
+    grammarAnYarnResult: GrammarResult = grammar_an_yarn(lexemeList, operationValue)
+
+    if(if_grammar_has_error(grammarAnYarnResult) or if_grammar_matched(grammarAnYarnResult)): #if a syntax or symbol error occured
+        return grammarAnYarnResult
+
+    return set_grammar("an_yarn", ErrorLineNumber, lexemeList, False, False, False, None)
+
+# Function that checks grammar of str_concat
+# Returns GrammarResult
+def grammar_str_concat(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("str_concat", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    operationValue = ""
+    if(lexemeList[0].classification == "Concatenation Operator"):
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            add_error_result_text(GrammarBinaryExpNoOperand, ErrorLineNumber)
+
+            return set_grammar("str_concat", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        #check if grammar fit expr
+        grammarExprResult: GrammarResult = grammar_expr(lexemeList)
+
+        if(if_grammar_has_error(grammarExprResult)): #if a syntax or symbol error occured
+            return grammarExprResult
+        elif(if_grammar_matched(grammarExprResult)):
+            typecastedValue = typecast_value(grammarExprResult.value, "YARN")
+
+            if(typecastedValue.ifSuccess):
+                operationValue += typecastedValue.value[1:-1]
+                
+                #check if lexeme list is empty before checking for further matches
+                if(lexeme_list_is_empty(lexemeList)):
+                    return set_grammar("str_concat", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+                ErrorLineNumber = lexemeList[0].lineNumber
+
+                if(lexemeList[0].classification == "New Line"):
+                    return set_grammar("str_concat", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+            else:
+                return set_grammar("str_concat", ErrorLineNumber, lexemeList, True, False, False, operationValue)
+
+        #check if grammar fit output_args
+        grammarAnYarnResult: GrammarResult = grammar_an_yarn(lexemeList, operationValue)
+
+        if(if_grammar_has_error(grammarAnYarnResult)): #if a syntax or symbol error occured, or success
+            return grammarAnYarnResult
+        elif(if_grammar_matched(grammarAnYarnResult)):
+            return set_grammar("str_concat", ErrorLineNumber, lexemeList, True, True, False, grammarAnYarnResult.value)
+
+    return set_grammar("str_concat", ErrorLineNumber, lexemeList, False, False, False, None)
 
 # Function that checks grammar of input
 # Returns GrammarResult
@@ -1281,9 +1383,15 @@ def grammar_expr(lexemeList):
     ErrorLineNumber = lexemeList[0].lineNumber
 
     #match with binary_exp
+    grammarStrConcatResult: GrammarResult = grammar_str_concat(lexemeList)
+    print_grammar_result(grammarStrConcatResult)
+
+    if(if_grammar_has_error(grammarStrConcatResult) or if_grammar_matched(grammarStrConcatResult)): #if a syntax or symbol error occurred, or if successful
+        return grammarStrConcatResult
+
+    #match with binary_exp
     grammarBoolExpResult: GrammarResult = grammar_bool_expr(lexemeList)
 
-    #if grammar fit input
     if(if_grammar_has_error(grammarBoolExpResult) or if_grammar_matched(grammarBoolExpResult)): #if a syntax or symbol error occurred, or if successful
         return grammarBoolExpResult
 
