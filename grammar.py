@@ -378,6 +378,72 @@ def grammar_str_concat(lexemeList):
 
     return set_grammar("str_concat", ErrorLineNumber, lexemeList, False, False, False, None)
 
+# Function that checks grammar of typecast_stmt
+# Returns GrammarResult
+def grammar_typecast_stmt(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    identifierName = ""
+    variableValue = None
+    newType = ""
+    if(lexemeList[0].classification == "Typecast Operator Start"):
+        lexemeList.pop(0)
+
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        if(lexemeList[0].classification == "Identifier"):
+            identifierName = lexemeList[0].string
+            lexemeList.pop(0)
+
+            if(lexeme_list_is_empty(lexemeList)):
+                return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            foundIdentifier = False
+            #check if identifier exists in symbol table
+            for symbolCounter in range(len(ListOfSymbols)):
+                symbol = ListOfSymbols[symbolCounter]
+
+                #set the value of the previous identifier
+                if(symbol.identifier == identifierName):
+                    foundIdentifier = True
+                    variableValue = symbol.value
+                    break
+
+            if(foundIdentifier == False): #if identifier not found, implement
+                add_error_result_text(GrammarErrorIdentifierNoIdentifierInSymbolTable, ErrorLineNumber)
+
+                return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, True, True, True, None)
+
+            if(lexemeList[0].classification == "Typecast Operator Mid"):
+                lexemeList.pop(0)
+
+                if(lexeme_list_is_empty(lexemeList)):
+                    return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+                ErrorLineNumber = lexemeList[0].lineNumber
+
+            if(lexemeList[0].classification == "Type Literal"):
+                newType = lexemeList[0].string
+                lexemeList.pop(0)
+
+                typecastedValue = typecast_value(variableValue, newType)
+
+                if(typecastedValue.ifSuccess):
+                    return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, True, True, False, typecastedValue.value)
+                elif(typecastedValue.ifSuccess == False):
+                    return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, True, True, True, typecastedValue.value)
+
+    #return fail
+    return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+
+
 # Function that checks grammar of input
 # Returns GrammarResult
 def grammar_input(lexemeList):
@@ -1382,12 +1448,17 @@ def grammar_expr(lexemeList):
         return set_grammar("expr", ErrorLineNumber, lexemeList, False, False, False, None)
     ErrorLineNumber = lexemeList[0].lineNumber
 
-    #match with binary_exp
+    #match with str_concat
     grammarStrConcatResult: GrammarResult = grammar_str_concat(lexemeList)
-    print_grammar_result(grammarStrConcatResult)
 
     if(if_grammar_has_error(grammarStrConcatResult) or if_grammar_matched(grammarStrConcatResult)): #if a syntax or symbol error occurred, or if successful
         return grammarStrConcatResult
+
+    #match with typecast_stmt
+    grammarTypecastStmt: GrammarResult = grammar_typecast_stmt(lexemeList)
+
+    if(if_grammar_has_error(grammarTypecastStmt) or if_grammar_matched(grammarTypecastStmt)): #if a syntax or symbol error occurred, or if successful
+        return grammarTypecastStmt
 
     #match with binary_exp
     grammarBoolExpResult: GrammarResult = grammar_bool_expr(lexemeList)
