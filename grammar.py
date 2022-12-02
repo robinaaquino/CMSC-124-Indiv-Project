@@ -1670,7 +1670,216 @@ def grammar_switch_stmt(lexemeList):
 
     return set_grammar("switch_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
 
+# Function that checks grammar of loop_condition
+# Returns Grammar Result
+def grammar_loop_condition(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("loop_condition", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if(lexemeList[0].string == "TIL"):
+        lexemeList.pop(0)
+
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("loop_condition", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        #check if grammar fit expr
+        grammarExprResult: GrammarResult = grammar_expr(lexemeList)
+        print('inside loop condtion')
+        print_grammar_result(grammarExprResult)
+
+        if(if_grammar_has_error(grammarExprResult)): #if a syntax or symbol error occured
+            return grammarExprResult
+        elif(if_grammar_matched(grammarExprResult)): #if successful
+            if(grammarExprResult.value == False):
+                return set_grammar("loop_condition", ErrorLineNumber, lexemeList, True, True, False, True)
+    elif(lexemeList[0].string == "WILE"):
+        lexemeList.pop(0)
+
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("loop_condition", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        #check if grammar fit expr
+        grammarExprResult: GrammarResult = grammar_expr(lexemeList)
+
+        if(if_grammar_has_error(grammarExprResult)): #if a syntax or symbol error occured
+            return grammarExprResult
+        elif(if_grammar_matched(grammarExprResult)): #if successful
+            if(grammarExprResult.value == True):
+                return set_grammar("loop_condition", ErrorLineNumber, lexemeList, True, True, False, True)
+
+    return set_grammar("loop_condition", ErrorLineNumber, lexemeList, False, False, False, False)
     
+# Function that checks grammar of loop_condition
+# Returns Grammar Result
+def grammar_loop_stmt(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    loopName = ""
+    variableName = ""
+    variableCounter = 0
+    counterUpdateOperator = ""
+    if(lexemeList[0].classification == "Loop Delimiter Start"): #check fpr loop delimiter start
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        if(lexemeList[0].classification == "Identifier"): ##check for identifier (for loop)
+            loopName = lexemeList[0].string
+            lexemeList.pop(0)
+
+            #check if lexeme list is empty before checking for further matches
+            if(lexeme_list_is_empty(lexemeList)):
+                return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            if(lexemeList[0].classification == "Unary Math Operator"): #check for loop operator
+                counterUpdateOperator = lexemeList[0].string
+                lexemeList.pop(0)
+
+                #check if lexeme list is empty before checking for further matches
+                if(lexeme_list_is_empty(lexemeList)):
+                    return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+                ErrorLineNumber = lexemeList[0].lineNumber
+
+                if(lexemeList[0].classification == "Argument Operator"): #check for YR
+                    lexemeList.pop(0)
+
+                    #check if lexeme list is empty before checking for further matches
+                    if(lexeme_list_is_empty(lexemeList)):
+                        return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+                    ErrorLineNumber = lexemeList[0].lineNumber
+
+                    if(lexemeList[0].classification == "Identifier"): #check for variable name
+                        variableName = lexemeList[0].string
+                        
+                        identifierIsFound = False
+                        #check if variable exists
+                        for symbolCounter in range(len(ListOfSymbols)):
+                            symbol = ListOfSymbols[symbolCounter]
+                            
+                            #set the value of the previous identifier
+                            if(symbol.identifier == variableName):
+                                variableCounter = symbolCounter
+                                identifierIsFound = True
+                                break
+                        
+                        #if identifier does not exist
+                        if(identifierIsFound == False):
+                            #if not symbol error
+                            add_error_result_text(variable_error_missing(variableName), ErrorLineNumber)
+                            
+                            return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
+
+                        lexemeList.pop(0)
+
+                        #check if lexeme list is empty before checking for further matches
+                        if(lexeme_list_is_empty(lexemeList)):
+                            return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+                        ErrorLineNumber = lexemeList[0].lineNumber
+
+                        # match grammar for loop_condition
+                        loopConditionListLexeme = []
+                        while(lexeme_list_is_empty(lexemeList) == False):
+                            if(lexemeList[0].classification == "New Line"): 
+                                lexemeList.pop(0)
+                                break
+                            loopConditionListLexeme.append(lexemeList[0])
+                            lexemeList.pop(0)
+
+                        # get the statements for repetition
+                        loopListOfLexeme = []
+                        while(lexeme_list_is_empty(lexemeList) == False):
+                            print('did it enter while?')
+                            if(lexemeList[0].classification == "Loop Delimiter End"): 
+                                break
+
+                            loopListOfLexeme.append(lexemeList[0])
+                            lexemeList.pop(0)
+
+                        while True: #loop set up
+                            print('Looping ', ListOfSymbols[variableCounter].identifier)
+                            print('Variable Value: ', ListOfSymbols[variableCounter].value)
+                            repeatingListOfLexeme = []
+                            for item in loopListOfLexeme:
+                                repeatingListOfLexeme.append(item)
+
+                            repeatingExpressionCondition = []
+                            for item in loopConditionListLexeme:
+                                repeatingExpressionCondition.append(item)
+
+                            #check for loop condition result
+                            grammarLoopConditionResult: GrammarResult = grammar_loop_condition(repeatingExpressionCondition)
+                            
+                            if(if_grammar_has_error(grammarLoopConditionResult)): #if a syntax or symbol error occured
+                                return grammarLoopConditionResult
+
+                            print('\nRESULT OF LOOP CONDTION')
+                            print(grammarLoopConditionResult.value)
+                            if(grammarLoopConditionResult.value == True):
+                                print_lexeme_list(repeatingListOfLexeme)
+
+                                # run grammar for stmt
+                                grammarStmtResult: GrammarResult = grammar_stmt(repeatingListOfLexeme)
+                                
+                                print('what happened here')
+                                print_grammar_result(grammarStmtResult)
+
+                                if(if_grammar_has_error(grammarStmtResult)): #if a syntax or symbol error occurred, or if successful
+                                    return grammarStmtResult
+
+                                if(counterUpdateOperator == "UPPIN"): #update variable in symbol table
+                                    ListOfSymbols[variableCounter].value = ListOfSymbols[variableCounter].value + 1
+                                    
+                                elif(counterUpdateOperator == "NERFIN"): #update variable in symbol table
+                                    ListOfSymbols[variableCounter].value = ListOfSymbols[variableCounter].value - 1
+                            else: #break if loop condition showed fail
+                                break
+                        
+                        #check if lexeme list is empty before checking for further matches
+                        if(lexeme_list_is_empty(lexemeList)):
+                            return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+                        ErrorLineNumber = lexemeList[0].lineNumber
+
+                        if(lexemeList[0].classification == "Loop Delimiter End"):
+                            lexemeList.pop(0)
+
+                            #check if lexeme list is empty before checking for further matches
+                            if(lexeme_list_is_empty(lexemeList)):
+                                return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+                            ErrorLineNumber = lexemeList[0].lineNumber
+
+                            if(lexemeList[0].classification == "Identifier"):
+                                if(loopName != lexemeList[0].string):
+                                    add_error_result_text(GrammarLoopStmtIncorrectLabel, ErrorLineNumber)
+                                    return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+
+                                lexemeList.pop(0)
+
+                                #check if lexeme list is empty before checking for further matches
+                                if(lexeme_list_is_empty(lexemeList)):
+                                    return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, True, True, False, None)
+                                ErrorLineNumber = lexemeList[0].lineNumber
+
+                                return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, True, True, False, None)
+    
+    return set_grammar("loop_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+
 # Function that checks grammar of stmt2
 # Returns GrammarResult
 def grammar_stmt2(lexemeList):
@@ -1711,6 +1920,12 @@ def grammar_stmt2(lexemeList):
         return grammarVariableAssignmentResult
 
     # else test other grammars
+
+    #check if grammar fit loop_stmt
+    grammarLoopStmtResult: GrammarResult = grammar_loop_stmt(lexemeList)
+
+    if(if_grammar_has_error(grammarLoopStmtResult) or if_grammar_matched(grammarLoopStmtResult)): #if a syntax or symbol error occured, or if successful
+        return grammarLoopStmtResult
 
     #check if grammar fit switch_stmt
     grammarSwitchStmtResult: GrammarResult = grammar_switch_stmt(lexemeList)
