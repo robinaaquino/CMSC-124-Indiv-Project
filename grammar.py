@@ -120,7 +120,7 @@ def typecast_value(value, newDataType):
         elif (dataTypeOfValue == "YARN"):
             value = value[1:-1]
             if(value.isdigit()):
-                return TypecastResult(round(float(value), 2), True) #conver to float then round to 2 decimal places
+                return TypecastResult(int(round(float(value), 2)), True)
         elif (dataTypeOfValue == "TROOF"):
             if (value == "WIN"):
                 return TypecastResult(1, True)
