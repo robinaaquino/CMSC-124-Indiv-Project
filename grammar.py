@@ -69,9 +69,6 @@ def get_actual_value(value):
 # Function to typecast a value to a data type
 # Returns typecasted value
 def typecast_value(value, newDataType):
-    #TODO update round to truncate to 2 decimal places
-    #needs a special function
-
     dataTypeOfValue = return_data_type(value)
     
     #convert value
@@ -215,66 +212,71 @@ def grammar_output(lexemeList):
 
     return set_grammar("output", ErrorLineNumber, lexemeList, False, False, False, None)
 
-# # Function that checks grammar of multiline_cmt2
-# # Returns GrammarResult
-# #TODO change grammar in word, does not need linebreak
-# def grammar_multiline_cmt2(lexemeList):
-#     global ResultText
-#     global ErrorLineNumber
+# Function that checks grammar of multiline_cmt2
+# Returns GrammarResult
+def grammar_multiline_cmt2(lexemeList):
+    global ResultText
+    global ErrorLineNumber
 
-#     #check if lexeme list is not empty
-#     if(lexeme_list_is_empty(lexemeList)):
-#         return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, False, False, False, None)
-#     ErrorLineNumber = lexemeList[0].lineNumber
+    #check if lexeme list is not empty
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
 
-#     #should match multiple comment lexemes
-#     while(lexemeList[0].classification == "Comment"):
-#         lexemeList.pop(0)
+    #should match multiple comment lexemes
+    while(lexemeList[0].classification == "Comment"):
+        lexemeList.pop(0)
 
-#         if(lexeme_list_is_empty(lexemeList)):
-#             return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, False, False, None)
-#         ErrorLineNumber = lexemeList[0].lineNumber
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
 
-#     #if not matched with a comment, check if multiline_cmt2 end delimiter is there
-#     if(lexemeList[0].classification == "Multi-line Comment Delimiter End"):
-#         lexemeList.pop(0)
+    #if not matched with a comment, check if multiline_cmt2 end delimiter is there
+    if(lexemeList[0].classification == "Multi-line Comment Delimiter End"):
+        lexemeList.pop(0)
 
-#         #return success
-#         return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, True, False, None)
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, True, False, None)
+
+        if(lexemeList[0].classification == "New Line"):
+            return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, True, False, None)
+        else:
+            #return success
+            return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, False, False, None)
     
-#     else: #should have multi line comment delimiter end
-#         add_error_result_text(GrammarErrorMultilineCommentNoDelimiterEnd, ErrorLineNumber)
+    else: #should have multi line comment delimiter end
+        add_error_result_text(GrammarErrorMultilineCommentNoDelimiterEnd, ErrorLineNumber)
 
-#         return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, False, False, None)
+        return set_grammar("multiline_cmt2", ErrorLineNumber, lexemeList, True, False, False, None)
 
-# # Function that checks grammar of multiline_cmt
-# # Returns GrammarResult
-# def grammar_multiline_cmt(lexemeList):
-#     global ResultText
-#     global ErrorLineNumber
+# Function that checks grammar of multiline_cmt
+# Returns GrammarResult
+def grammar_multiline_cmt(lexemeList):
+    global ResultText
+    global ErrorLineNumber
 
-#     grammarResult = GrammarResult("", -1, [], False, False, True, None)
+    grammarResult = GrammarResult("", -1, [], False, False, True, None)
 
-#     if(lexeme_list_is_empty(lexemeList)):
-#         return set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, False, False, False, None)
-#     ErrorLineNumber = lexemeList[0].lineNumber
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
 
-#     if(lexemeList[0].classification == "Multi-line Comment Delimiter Start"):
-#         lexemeList.pop(0)
+    if(lexemeList[0].classification == "Multi-line Comment Delimiter Start"):
+        lexemeList.pop(0)
 
-#         # check if lexeme list is empty before checking for further matches
-#         if(lexeme_list_is_empty(lexemeList)):
-#             return set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, True, False, False, None)
-#         ErrorLineNumber = lexemeList[0].lineNumber
+        # check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
 
-#         grammarMultilineCmt2Result = grammar_multiline_cmt2(lexemeList)
+        grammarMultilineCmt2Result = grammar_multiline_cmt2(lexemeList)
 
-#         return grammarMultilineCmt2Result
-#     else:
-#         #should syntax error be true if ifFirstLexemeMatched is false
-#         grammarResult = set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, False, False, False, None)
+        return grammarMultilineCmt2Result
+    else:
+        #should syntax error be true if ifFirstLexemeMatched is false
+        grammarResult = set_grammar("multiline_cmt", ErrorLineNumber, lexemeList, False, False, False, None)
 
-#     return grammarResult
+    return grammarResult
 
 # Function that checks grammar of an_yarn
 # Returns GrammarResult
@@ -301,7 +303,6 @@ def grammar_an_yarn(lexemeList, operationValue):
         if(if_grammar_has_error(grammarExprResult)): #if a syntax or symbol error occured
             return grammarExprResult
         elif(if_grammar_matched(grammarExprResult)):
-            print_lexeme_list(lexemeList)
             typecastedValue = typecast_value(grammarExprResult.value, "YARN")
 
             if(typecastedValue.ifSuccess):
@@ -556,7 +557,6 @@ def grammar_input(lexemeList):
                 if(symbol.identifier == lexemeList[0].string):
                     UserInputValue = simpledialog.askstring("Input", "Input text")
 
-                    #TODO check if this works when creating variables
                     ListOfSymbols[symbolCounter].value = "\"" + UserInputValue + "\""
 
                     lexemeList.pop(0)
@@ -879,7 +879,6 @@ def grammar_binary_bool_operator(lexemeList):
                             add_error_result_text(typecast_error(grammarBinaryExp2Result.value, "TROOF"), ErrorLineNumber)
 
                         return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
-                        #TODO changed to symbol error true due to error in typecast
                     
                     firstOperand = get_actual_value(firstOperand.value)
                     secondOperand = get_actual_value(secondOperand.value)
@@ -982,8 +981,6 @@ def grammar_binary_math_operator(lexemeList):
                             add_error_result_text(typecast_error(grammarBinaryExp2Result.value, operationResultType), ErrorLineNumber)
 
                         return set_grammar("binary_math_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
-                        #TODO check if symbol error is supposed to be false, this is an error
-                        #changed to True
                     
                     firstOperand = get_actual_value(firstOperand.value)
                     secondOperand = get_actual_value(secondOperand.value)
@@ -1201,7 +1198,6 @@ def grammar_infinite_arity_expr(lexemeList):
                         add_error_result_text(typecast_error(grammarInfiniteArityExprOperand2Result.value, "TROOF"), ErrorLineNumber)
 
                     return set_grammar("binary_bool_operator", ErrorLineNumber, lexemeList, True, True, True, operationValue)
-                    #TODO changed to symbol error true due to error in typecast
                 
                 firstOperand = get_actual_value(firstOperand.value)
                 secondOperand = get_actual_value(secondOperand.value)
@@ -1265,8 +1261,6 @@ def grammar_comparison_operator(lexemeList):
         ErrorLineNumber = lexemeList[0].lineNumber
 
         grammarExp1Result = grammar_expr(lexemeList)
-
-        #TODO consider only having if_grammar_matched, and just returning error with expression with an else or as a catch
 
         #if grammar fit exp
         if (if_grammar_has_error(grammarExp1Result)): #if error
@@ -1437,7 +1431,6 @@ def grammar_bool_expr(lexemeList):
                 add_error_result_text(typecast_error(grammarExprResult.value, "TROOF"), ErrorLineNumber)
 
                 return set_grammar("bool_expr", ErrorLineNumber, lexemeList, True, True, True, operationValue)
-                #TODO changed to symbol error true due to error in typecast
             
             firstOperand = firstOperand.value
 
@@ -1502,7 +1495,6 @@ def grammar_infinite_arity_expr_operand(lexemeList):
                 add_error_result_text(typecast_error(grammarInfiniteArityExprOperandResult.value, "TROOF"), ErrorLineNumber)
 
                 return set_grammar("infinite_arity_expr_operand", ErrorLineNumber, lexemeList, True, True, True, operationValue)
-                #TODO changed to symbol error true due to error in typecast
             
             firstOperand = firstOperand.value
 
@@ -2218,12 +2210,11 @@ def grammar_stmt2(lexemeList):
     if(if_grammar_has_error(grammarOutputResult) or if_grammar_matched(grammarOutputResult)): #if a syntax or symbol error occurred, or if successful
         return grammarOutputResult
 
-    #TODO have to fix the error in lexemes, to not consider new line as comment
-    #check if grammar fit multiline comment
-    # grammarMultilineCommentResult: GrammarResult = grammar_multiline_cmt(lexemeList)
+    # check if grammar fit multiline comment
+    grammarMultilineCommentResult: GrammarResult = grammar_multiline_cmt(lexemeList)
 
-    # if(if_grammar_has_error(grammarMultilineCommentResult) or if_grammar_matched(grammarMultilineCommentResult)): #if a syntax or symbol error occured, or if successful
-    #     return grammarMultilineCommentResult
+    if(if_grammar_has_error(grammarMultilineCommentResult) or if_grammar_matched(grammarMultilineCommentResult)): #if a syntax or symbol error occured, or if successful
+        return grammarMultilineCommentResult
 
     #check if grammar fit variable assignment
     grammarVariableAssignmentResult: GrammarResult = grammar_variable_assignment(lexemeList)
@@ -2231,12 +2222,8 @@ def grammar_stmt2(lexemeList):
     if(if_grammar_has_error(grammarVariableAssignmentResult) or if_grammar_matched(grammarVariableAssignmentResult)): #if a syntax or symbol error occured, or if successful
         return grammarVariableAssignmentResult
 
-    # else test other grammars
-    print_lexeme_list(lexemeList)
-
     #check if grammar fit recast_stmt
     grammarRecastStmtResult: GrammarResult = grammar_recast_stmt(lexemeList)
-    print_grammar_result(grammarRecastStmtResult)
 
     if(if_grammar_has_error(grammarRecastStmtResult) or if_grammar_matched(grammarRecastStmtResult)): #if a syntax or symbol error occured, or if successful
         return grammarRecastStmtResult
@@ -2317,17 +2304,9 @@ def grammar_stmt(lexemeList: list):
 
             if(if_grammar_has_error(grammarStmtResult) or if_grammar_matched(grammarStmtResult)): #if it matched
                 return grammarStmtResult
-        # else:
-        #     add_error_result_text(GrammarErrorNewLineMissing, ErrorLineNumber)
-
-        #     return set_grammar("stmt", ErrorLineNumber, lexemeList, True, False, False, None)
-
-    #TODO should we accept HAI THX only? change how error is parsed, based on grammar tho
-    # change grammar if we'll accept HAI THX, for now don't accept HAI THX only
 
     #default grammar error result if it does NOT fit ANY abstractions at all for stmt
     grammarResult = GrammarResult("stmt", ErrorLineNumber, lexemeList, False, False, False, None)
-    # add_error_result_text(GrammarErrorStmtNoAbstractionMatch, ErrorLineNumber)
     return grammarResult
 
 # Function that checks grammar of program
@@ -2343,6 +2322,27 @@ def grammar_program(lexemeList: list):
     if(lexeme_list_is_empty(lexemeList)):
         return set_grammar("program", ErrorLineNumber, lexemeList, False, False, False, None)
     ErrorLineNumber = 0
+
+    #remove all inline comments
+    for counter in range(len(lexemeList)):
+        if(lexemeList[counter].classification == "Inline Comment Delimiter"):
+            previousCounter = counter
+            lexemeList.pop(counter)
+
+            #check if lexeme list is empty before checking for further matches
+            if(lexeme_list_is_empty(lexemeList)):
+                return set_grammar("stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            if(lexemeList[counter].classification == "Comment"):
+                lexemeList.pop(previousCounter)
+
+                #check if lexeme list is empty before checking for further matches
+                if(lexeme_list_is_empty(lexemeList)):
+                    return set_grammar("stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+                ErrorLineNumber = lexemeList[0].lineNumber
+
+            break
 
     # check if it starts with the code delimiter
     if (lexemeList[0].classification == "Code Delimiter Start"):
@@ -2362,8 +2362,6 @@ def grammar_program(lexemeList: list):
             # check if lexeme list is empty before checking for further matches
             if(lexeme_list_is_empty(lexemeList)):
                 return set_grammar("program", ErrorLineNumber, lexemeList, True, False, False, None)
-
-            #TODO Should we accept HAI THX only with no other code?
 
             ErrorLineNumber = lexemeList[0].lineNumber
             

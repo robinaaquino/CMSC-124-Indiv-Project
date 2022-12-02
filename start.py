@@ -28,40 +28,12 @@ MainWindow.title("LOL Interpreter vers. CMSC124")
 # MainWindow.geometry("900x400")
 MainWindow.config(bg='skyblue')
 
-# TODO
-# Switch from pack to grid
-
-# key binds
-# alt + k + 0 collapse
-# alt + k + j expand
-
-# bookmarks
-# cltr + alt + k bookmark
-# ctrl + alt + l next
-# ctrl + alt + j prev
-
 #global variables
 CurrentlyAccessedFile = ''  # file opened by user
 
 # functions
 
 # ui functions
-
-##################################
-# def save_user_input_function():
-#     global UserInputValue
-
-#     UserInputValue = TextArea.get("1.0", END)[0:-1]
-
-# # Function that is used to get user input
-# # Accepts no arguments
-# def open_user_input_window():
-#     print('is this running?')
-#     UserWindow = Toplevel(MainWindow)
-
-#     UserInputTextArea = Text(UserWindow)
-#     UserInputInputButton = Button(UserWindow, text="Enter", command=save_user_input_function)
-##################################
 
 # Function that is used to load a text file
 # Accepts no arguments
@@ -184,8 +156,7 @@ TextArea.pack(padx=5, pady=5, expand=TRUE, fill=BOTH, side=LEFT)
 LexemeFrame = Frame(TopFrame)
 LexemeFrame.pack(ipadx=10, ipady=10, expand=TRUE, fill=BOTH, side=LEFT)
 LexemeFrameYScrollbar = Scrollbar(LexemeFrame)
-LexemeFrameYScrollbar.pack(side=LEFT, fill=Y) #TODO GUI ISSUES WITH SCROLLBAR
-
+LexemeFrameYScrollbar.pack(side=LEFT, fill=Y)
 #widgets for lexeme frame
 LexemeTableFrame = ttk.Treeview(LexemeFrame, yscrollcommand=LexemeFrameYScrollbar.set)
 LexemeFrameYScrollbar.config(command=LexemeTableFrame.yview)

@@ -28,7 +28,9 @@ ExpressionAndOperatorRegex = "AN\s"
 #comments
 InlineCommentDelimiterRegex = "BTW\s"
 MultiCommentDelimiterStartRegex = "OBTW\s"
-MultiCommentDelimiterEndRegex = "TLDR\n"
+MultiCommentDelimiterEndRegex = "TLDR\s"
+MultiLineCommentRegex = ".+(\s)?" #regex to identify any comment separated by whitespace
+CommentRegex = "[^\n]+" #regex to identify any comment not separated by whitespace
 
 #casting
 CastingOperatorRegex = "IS NOW A\s"
@@ -70,8 +72,6 @@ IdentifierRegex = "[A-Za-z]+[A-Za-z0-9_]*\s" #regex to identify variable names
 #regex for literals
 NumbrLiteralRegex = "(-[1-9][0-9]*|[1-9][0-9]*|[0])\s" #regex to identify integers
 NumbarLiteralRegex = "(-?[0-9]*)\.[0-9]*[1-9]\s" #regex to identify floats
-#TODO (-?[0-9]*)\.([0-9]+)\s change to this? allow 1.0000 and 1.01000 when converted to int and float, is parsed automatically
-#if not check typecast_value
 
 TroofLiteralRegex = "(WIN|FAIL)\s" #regex for boolean values
 TypeLiteralRegex = "(NOOB|NUMBR|NUMBAR|TROOF|YARN)\s" #regex for types
@@ -79,8 +79,6 @@ YarnLiteralRegex = "\".+\"\s" #regex to identify strings
 
 NewLineRegex = "\n" #regex to identify new line
 OtherRegex = ".*" #regex to identify any word that doesn't 
-MultiLineCommentRegex = ".+(\s)?" #regex to identify any comment separated by whitespace
-CommentRegex = ".+" #regex to identify any comment not separated by whitespace
 
 #next step, catch all tokens split by spaces and newlines
 
@@ -101,8 +99,6 @@ def add_new_lexeme(regex, textString, lineNumber, classification):
 #Accepts a text string
 #Sets the global variable
 def return_list_of_lexemes(textString):
-    #TODO maybe add a way to strip the lines? no, maybe just remove whitespaces at the end and start of the text yea
-
     global ListOfLexemes
 
     lineNumber = 1
@@ -327,59 +323,46 @@ def return_list_of_lexemes(textString):
             textString = add_new_lexeme(typeLiteralRegexMatch, textString, lineNumber, 'Type Literal')
             continue
 
+        # check if matched with comments
+        inlineCommentDelimiterRegexMatch = re.match(InlineCommentDelimiterRegex, textString)
+        if(inlineCommentDelimiterRegexMatch):
+            textString = add_new_lexeme(inlineCommentDelimiterRegexMatch, textString, lineNumber, 'Inline Comment Delimiter')
+
+            if(len(textString) > 0):
+                commentRegexMatch = re.match(CommentRegex, textString)
+                if(commentRegexMatch):
+                    textString = add_new_lexeme(commentRegexMatch, textString, lineNumber, 'Comment')
+                continue
+
+        multiCommentDelimiterStartRegexMatch = re.match(MultiCommentDelimiterStartRegex, textString)
+        if(multiCommentDelimiterStartRegexMatch):
+            textString = add_new_lexeme(multiCommentDelimiterStartRegexMatch, textString, lineNumber, 'Multi-line Comment Delimiter Start')
+
+            # loop until there's the end delimiter
+            while len(textString) > 0:
+                multiCommentDelimiterEndRegexMatch = re.match(MultiCommentDelimiterEndRegex, textString)
+                if(multiCommentDelimiterEndRegexMatch):
+                    textString = add_new_lexeme(multiCommentDelimiterEndRegexMatch, textString, lineNumber, 'Multi-line Comment Delimiter End')
+                    break
+
+                MultiLineCommentRegexMatch = re.match(MultiLineCommentRegex, textString)
+                if(MultiLineCommentRegexMatch):
+                    textString = add_new_lexeme(MultiLineCommentRegexMatch, textString, lineNumber, 'Comment')
+                    continue
+                print(len(textString))
+                print(textString)
+            continue
+        
+        multiCommentDelimiterEndRegexMatch = re.match(MultiCommentDelimiterEndRegex, textString)
+        if(multiCommentDelimiterEndRegexMatch):
+            textString = add_new_lexeme(multiCommentDelimiterEndRegexMatch, textString, lineNumber, 'Multi-line Comment Delimiter End')
+            continue
+
         #check if matched with identifiers
         identifierRegexMatch = re.match(IdentifierRegex, textString)
         if(identifierRegexMatch):
             textString = add_new_lexeme(identifierRegexMatch, textString, lineNumber, 'Identifier')
             continue
-
-        #TODO NO HANDLER FOR COMMENTS AFTER INLINE COMMENT DELIMITER LEL
-        #BUG regex needs to match with new line
-        #inline comment, get all string after BTW as comment except new line
-        #multiline comment, get all string after OBTW as comment except new line but every succedding line is counted as comment until TLDR is found
-
-        #check if matched with comments
-        # inlineCommentDelimiterRegexMatch = re.match(InlineCommentDelimiterRegex, textString)
-        # if(inlineCommentDelimiterRegexMatch):
-        #     textString = add_new_lexeme(inlineCommentDelimiterRegexMatch, textString, lineNumber, 'Inline Comment Delimiter')
-
-        #     while len(textString) > 0:
-        #         newLineRegexMatch = re.match(NewLineRegex, textString)
-        #         if(newLineRegexMatch):
-        #             textString = add_new_lexeme(newLineRegexMatch, textString, lineNumber, 'New Line')
-        #             lineNumber+=1
-        #             break
-
-        #         CommentRegexMatch = re.match(CommentRegex, textString)
-        #         if(CommentRegexMatch):
-        #             textString = add_new_lexeme(CommentRegexMatch, textString, lineNumber, 'Comment')
-        #             continue
-
-        #     continue
-
-        # multiCommentDelimiterStartRegexMatch = re.match(MultiCommentDelimiterStartRegex, textString)
-        # if(multiCommentDelimiterStartRegexMatch):
-        #     textString = add_new_lexeme(multiCommentDelimiterStartRegexMatch, textString, lineNumber, 'Multi-line Comment Delimiter Start')
-
-        #     # loop until there's the end delimiter
-        #     while len(textString) > 0:
-        #         multiCommentDelimiterEndRegexMatch = re.match(MultiCommentDelimiterEndRegex, textString)
-        #         if(multiCommentDelimiterEndRegexMatch):
-        #             textString = add_new_lexeme(multiCommentDelimiterEndRegexMatch, textString, lineNumber, 'Multi-line Comment Delimiter End')
-        #             break
-
-        #         MultiLineCommentRegexMatch = re.match(MultiLineCommentRegex, textString)
-        #         if(MultiLineCommentRegexMatch):
-        #             textString = add_new_lexeme(MultiLineCommentRegexMatch, textString, lineNumber, 'Comment')
-        #             continue
-        #         print(len(textString))
-        #         print(textString)
-        #     continue
-        
-        # multiCommentDelimiterEndRegexMatch = re.match(MultiCommentDelimiterEndRegex, textString)
-        # if(multiCommentDelimiterEndRegexMatch):
-        #     textString = add_new_lexeme(multiCommentDelimiterEndRegexMatch, textString, lineNumber, 'Multi-line Comment Delimiter End')
-        #     continue
 
         #check if matched with anything else
         otherRegexMatch = re.match(OtherRegex, textString)

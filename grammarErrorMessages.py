@@ -1,5 +1,3 @@
-#TODO Separate in groups of grammar
-
 # Grammar Error Codes
 GrammarErrorNoCodeDelimiterStart = "Missing HAI at the start of the program"
 GrammarErrorNoCodeDelimiterEnd = "Missing KTHX at the end of the program"
