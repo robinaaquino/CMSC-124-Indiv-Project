@@ -444,6 +444,87 @@ def grammar_typecast_stmt(lexemeList):
     return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
 
 
+# Function that checks grammar of recast_stmt
+# Returns GrammarResult
+def grammar_recast_stmt(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("recast_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    identifierName = ""
+    variableValue = None
+    newType = ""
+    variableCounter = 0
+    if(lexemeList[0].classification == "Identifier"):
+        identifierName = lexemeList[0].string
+        identifierDetails = lexemeList[0]
+        lexemeList.pop(0)
+
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("recast_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        foundIdentifier = False
+        #check if identifier exists in symbol table
+        for symbolCounter in range(len(ListOfSymbols)):
+            symbol = ListOfSymbols[symbolCounter]
+
+            #set the value of the previous identifier
+            if(symbol.identifier == identifierName):
+                variableCounter = symbolCounter
+                foundIdentifier = True
+                variableValue = symbol.value
+                break
+
+        if(foundIdentifier == False): #if identifier not found, implement
+            add_error_result_text(GrammarErrorIdentifierNoIdentifierInSymbolTable, ErrorLineNumber)
+
+            return set_grammar("recast_stmt", ErrorLineNumber, lexemeList, True, True, True, None)
+
+        if(lexemeList[0].classification == "Casting Operator"):
+            lexemeList.pop(0)
+
+            if(lexeme_list_is_empty(lexemeList)):
+                return set_grammar("recast_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            if(lexemeList[0].classification == "Type Literal"):
+                newType = lexemeList[0].string
+                lexemeList.pop(0)
+
+                typecastedValue = typecast_value(variableValue, newType)
+
+                if(typecastedValue.ifSuccess):
+                    ListOfSymbols[variableCounter] = Symbol(identifierName, typecastedValue.value)
+
+                    return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, True, True, False, typecastedValue.value)
+                elif(typecastedValue.ifSuccess == False):
+                    return set_grammar("typecast_stmt", ErrorLineNumber, lexemeList, True, True, True, typecastedValue.value)
+        elif(lexemeList[0].classification == "Variable Assignment"):
+            lexemeList.pop(0)
+
+            if(lexeme_list_is_empty(lexemeList)):
+                return set_grammar("recast_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            #check if grammar fit input
+            grammarTypecastStmtResult: GrammarResult = grammar_typecast_stmt(lexemeList)
+
+            if(if_grammar_has_error(grammarTypecastStmtResult)): #if a syntax or symbol error occurred, or if successful
+                return grammarTypecastStmtResult
+            elif(if_grammar_matched(grammarTypecastStmtResult)):
+                ListOfSymbols[variableCounter] = grammarTypecastStmtResult.value
+
+                return set_grammar("recast_stmt", ErrorLineNumber, lexemeList, True, True, False, None) 
+        else:
+            lexemeList.insert(0, identifierDetails)
+
+    return set_grammar("recast_stmt", ErrorLineNumber, lexemeList, False, False, False, None) 
+
+
 # Function that checks grammar of input
 # Returns GrammarResult
 def grammar_input(lexemeList):
@@ -607,7 +688,7 @@ def grammar_variable_assignment(lexemeList):
         identifierName = lexemeList[0].string
         identifierCounter = 0
         doesExist = False
-        lexemeList.pop(0)
+        identifierDetails = lexemeList.pop(0)
 
         for symbolCounter in range(len(ListOfSymbols)): #check if identifier exists in symbol table
             symbol = ListOfSymbols[symbolCounter]
@@ -680,10 +761,8 @@ def grammar_variable_assignment(lexemeList):
                 ListOfSymbols[identifierCounter].value = grammarExprResult.value #update value
 
                 return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, True, False, None)
-
-        #return grammar fail
-        return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, True, False, False, None)
-
+        else:
+            lexemeList.insert(0, identifierDetails)
     #return fail
     return set_grammar("variable_assignment", ErrorLineNumber, lexemeList, False, False, False, None)
 
@@ -2153,6 +2232,14 @@ def grammar_stmt2(lexemeList):
         return grammarVariableAssignmentResult
 
     # else test other grammars
+    print_lexeme_list(lexemeList)
+
+    #check if grammar fit recast_stmt
+    grammarRecastStmtResult: GrammarResult = grammar_recast_stmt(lexemeList)
+    print_grammar_result(grammarRecastStmtResult)
+
+    if(if_grammar_has_error(grammarRecastStmtResult) or if_grammar_matched(grammarRecastStmtResult)): #if a syntax or symbol error occured, or if successful
+        return grammarRecastStmtResult
 
     #check if grammar fit loop_stmt
     grammarLoopStmtResult: GrammarResult = grammar_loop_stmt(lexemeList)
