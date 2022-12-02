@@ -24,6 +24,8 @@ GrammarComparisonOperationParseError = "Error in parsing expression"
 GrammarCondStmtMissingElseKeyword = "Missing NO WAI keyword"
 GrammarCondStmtMissingDelimiterEndKeyword = "Missing OIC keyword"
 
+GrammarLoopStmtIncorrectLabel = "Incorrect loop label"
+
 
 # Utility Error Codes
 GrammarErrorEmptyLexemeList = "Lexeme list is empty"
