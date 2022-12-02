@@ -24,7 +24,6 @@ GrammarCondStmtMissingDelimiterEndKeyword = "Missing OIC keyword"
 
 GrammarLoopStmtIncorrectLabel = "Incorrect loop label"
 
-
 # Utility Error Codes
 GrammarErrorEmptyLexemeList = "Lexeme list is empty"
 GrammarErrorNewLineMissing = "Missing new line"

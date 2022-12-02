@@ -555,7 +555,7 @@ def grammar_input(lexemeList):
                 symbol = ListOfSymbols[symbolCounter]
                 #if identifier matches with lexeme identifier
                 if(symbol.identifier == lexemeList[0].string):
-                    UserInputValue = simpledialog.askstring("Input", "Input text")
+                    UserInputValue = simpledialog.askstring("Input", symbol.identifier)
 
                     ListOfSymbols[symbolCounter].value = "\"" + UserInputValue + "\""
 
@@ -2387,8 +2387,8 @@ def return_list_of_symbols():
     ResultText = ""
 
     grammarProgramResult = grammar_program(ListOfLexemes)
-    print_lexeme_list(ListOfLexemes)
-    print_grammar_result(grammarProgramResult)
-    print_symbol_list(ListOfSymbols)
+    # print_lexeme_list(ListOfLexemes)
+    # print_grammar_result(grammarProgramResult)
+    # print_symbol_list(ListOfSymbols)
 
     return ResultText
