@@ -142,18 +142,79 @@ def typecast_value(value, newDataType):
             return TypecastResult(value, True)
 
     return TypecastResult(value, False)
-    
-# Function that checks grammar of print
+
+# Function that checks grammar of output
 # Returns GrammarResult
-def grammar_print(lexemeList):
+def grammar_output_args(lexemeList, operationValue):
     global ResultText
     global ErrorLineNumber
 
-    grammarResult = GrammarResult("", -1, [], False, False, True, None)
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("output_args", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
 
-    # if matched with output
+    #check if grammar fit expr
+    grammarExprResult: GrammarResult = grammar_expr(lexemeList)
 
-    # else syntax error..? NO SYNTAX ERROR BECAUSE IT DIDNT MATCH FIRST KEYWORD FOR STATEMENT
+    if(if_grammar_has_error(grammarExprResult)): #if a syntax or symbol error occured
+        return grammarExprResult
+    elif(if_grammar_matched(grammarExprResult)):
+        typecastedValue = typecast_value(grammarExprResult.value, "YARN")
+
+        if(typecastedValue.ifSuccess):
+            
+            operationValue += typecastedValue.value[1:-1]
+            
+            #check if lexeme list is empty before checking for further matches
+            if(lexeme_list_is_empty(lexemeList)):
+                return set_grammar("output_args", ErrorLineNumber, lexemeList, True, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            if(lexemeList[0].classification == "New Line"):
+                return set_grammar("output_args", ErrorLineNumber, lexemeList, True, True, False, operationValue)
+        else:
+            return set_grammar("output_args", ErrorLineNumber, lexemeList, True, False, False, operationValue)
+
+    #check if grammar fit output_args
+    grammarOutputArgsResult: GrammarResult = grammar_output_args(lexemeList, operationValue)
+
+    if(if_grammar_has_error(grammarOutputArgsResult) or if_grammar_matched(grammarOutputArgsResult)): #if a syntax or symbol error occured
+        return grammarOutputArgsResult
+
+    return set_grammar("output_args", ErrorLineNumber, lexemeList, False, False, False, None)
+
+# Function that checks grammar of output
+# Returns GrammarResult
+def grammar_output(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("output", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if(lexemeList[0].classification == "Output"):
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            add_error_result_text(GrammarBinaryExpNoOperand, ErrorLineNumber)
+
+            return set_grammar("infinite_arity_expr", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        #check if grammar fit output_args
+        grammarOutputArgsResult: GrammarResult = grammar_output_args(lexemeList, "")
+
+        if(if_grammar_has_error(grammarOutputArgsResult)): #if a syntax or symbol error occured, or success
+            return grammarOutputArgsResult
+        elif(if_grammar_matched(grammarOutputArgsResult)):
+            ResultText += grammarOutputArgsResult.value + "\n"
+            return grammarOutputArgsResult
+
+    return set_grammar("output", ErrorLineNumber, lexemeList, False, False, False, None)
 
 # # Function that checks grammar of multiline_cmt2
 # # Returns GrammarResult
@@ -1905,6 +1966,12 @@ def grammar_stmt2(lexemeList):
 
     if(if_grammar_has_error(grammarInputResult) or if_grammar_matched(grammarInputResult)): #if a syntax or symbol error occurred, or if successful
         return grammarInputResult
+
+    #check if grammar fit output
+    grammarOutputResult: GrammarResult = grammar_output(lexemeList)
+
+    if(if_grammar_has_error(grammarOutputResult) or if_grammar_matched(grammarOutputResult)): #if a syntax or symbol error occurred, or if successful
+        return grammarOutputResult
 
     #TODO have to fix the error in lexemes, to not consider new line as comment
     #check if grammar fit multiline comment
