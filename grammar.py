@@ -163,12 +163,11 @@ def grammar_output_args(lexemeList, operationValue):
         typecastedValue = typecast_value(grammarExprResult.value, "YARN")
 
         if(typecastedValue.ifSuccess):
-            
             operationValue += typecastedValue.value[1:-1]
             
             #check if lexeme list is empty before checking for further matches
             if(lexeme_list_is_empty(lexemeList)):
-                return set_grammar("output_args", ErrorLineNumber, lexemeList, True, False, False, None)
+                return set_grammar("output_args", ErrorLineNumber, lexemeList, True, True, False, operationValue)
             ErrorLineNumber = lexemeList[0].lineNumber
 
             if(lexemeList[0].classification == "New Line"):
@@ -309,7 +308,7 @@ def grammar_input(lexemeList):
                     UserInputValue = simpledialog.askstring("Input", "Input text")
 
                     #TODO check if this works when creating variables
-                    ListOfSymbols[symbolCounter].value = UserInputValue
+                    ListOfSymbols[symbolCounter].value = "\"" + UserInputValue + "\""
 
                     lexemeList.pop(0)
 
@@ -317,12 +316,12 @@ def grammar_input(lexemeList):
                     return set_grammar("input", ErrorLineNumber, lexemeList, True, True, False, None)
 
             #if it found no identifier in the symbol table, return error
-            grammarResult = set_grammar("input", ErrorLineNumber, lexemeList, True, True, True, None, None)
+            grammarResult = set_grammar("input", ErrorLineNumber, lexemeList, True, True, True, None)
 
             add_error_result_text(GrammarErrorIdentifierNoIdentifierInSymbolTable, ErrorLineNumber)
 
         else:
-            grammarResult = set_grammar("input", ErrorLineNumber, lexemeList, True, False, False, None, None)
+            grammarResult = set_grammar("input", ErrorLineNumber, lexemeList, True, False, False, None)
 
             add_error_result_text(GrammarErrorIdentifierNoIdentifier, ErrorLineNumber)
     else:
@@ -1751,8 +1750,6 @@ def grammar_loop_condition(lexemeList):
 
         #check if grammar fit expr
         grammarExprResult: GrammarResult = grammar_expr(lexemeList)
-        print('inside loop condtion')
-        print_grammar_result(grammarExprResult)
 
         if(if_grammar_has_error(grammarExprResult)): #if a syntax or symbol error occured
             return grammarExprResult
@@ -1866,7 +1863,6 @@ def grammar_loop_stmt(lexemeList):
                         # get the statements for repetition
                         loopListOfLexeme = []
                         while(lexeme_list_is_empty(lexemeList) == False):
-                            print('did it enter while?')
                             if(lexemeList[0].classification == "Loop Delimiter End"): 
                                 break
 
@@ -1874,8 +1870,6 @@ def grammar_loop_stmt(lexemeList):
                             lexemeList.pop(0)
 
                         while True: #loop set up
-                            print('Looping ', ListOfSymbols[variableCounter].identifier)
-                            print('Variable Value: ', ListOfSymbols[variableCounter].value)
                             repeatingListOfLexeme = []
                             for item in loopListOfLexeme:
                                 repeatingListOfLexeme.append(item)
@@ -1890,16 +1884,9 @@ def grammar_loop_stmt(lexemeList):
                             if(if_grammar_has_error(grammarLoopConditionResult)): #if a syntax or symbol error occured
                                 return grammarLoopConditionResult
 
-                            print('\nRESULT OF LOOP CONDTION')
-                            print(grammarLoopConditionResult.value)
                             if(grammarLoopConditionResult.value == True):
-                                print_lexeme_list(repeatingListOfLexeme)
-
                                 # run grammar for stmt
                                 grammarStmtResult: GrammarResult = grammar_stmt(repeatingListOfLexeme)
-                                
-                                print('what happened here')
-                                print_grammar_result(grammarStmtResult)
 
                                 if(if_grammar_has_error(grammarStmtResult)): #if a syntax or symbol error occurred, or if successful
                                     return grammarStmtResult
