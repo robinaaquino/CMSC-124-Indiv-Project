@@ -1418,9 +1418,257 @@ def grammar_cond_stmt(lexemeList):
                     add_error_result_text(GrammarErrorNewLineMissing, ErrorLineNumber)
                     return set_grammar("cond_stmt", ErrorLineNumber, lexemeList, True, False, False, None)                                 
             else:
-                # print_lexeme_list(lexemeList)
                 return set_grammar("cond_stmt", ErrorLineNumber, exprLexemeList, False, False, False, None)
     return set_grammar("cond_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+
+# Function that checks grammar of omg_stmt_end
+# Returns Grammar Result
+def grammar_omg_stmt_end(lexemeList, runDefault):
+    global ResultText
+    global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if(lexemeList[0].classification == "Conditional Delimiter End"):
+        lexemeList.pop(0)
+
+        #return success
+        return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, True, True, False, None)
+    elif(lexemeList[0].classification == "Conditional Switch Last"):
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        if(lexemeList[0].classification == "New Line"):
+            lexemeList.pop(0)
+
+            #check if lexeme list is empty before checking for further matches
+            if(lexeme_list_is_empty(lexemeList)):
+                return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, True, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            switchListOfLexeme = []
+            while(lexeme_list_is_empty(lexemeList) == False):
+                if(lexemeList[0].classification == "Conditional Switch" or lexemeList[0].classification == "Conditional Switch Last" or lexemeList[0].classification == "Conditional Delimiter End" ): 
+                    break
+
+                switchListOfLexeme.append(lexemeList[0])
+                lexemeList.pop(0)
+            
+            if(runDefault):
+                #check if grammar fit stmt
+                grammarStmtResult: GrammarResult = grammar_stmt(switchListOfLexeme)
+
+                if(if_grammar_has_error(grammarStmtResult)): #if a syntax or symbol error occurred, or if successful
+                    return grammarStmtResult
+            
+            if(lexemeList[0].classification == "Conditional Delimiter End"):
+                lexemeList.pop(0)
+
+                #check if lexeme list is empty before checking for further matches
+                if(lexeme_list_is_empty(lexemeList)):
+                    return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, True, False, False, None)
+                ErrorLineNumber = lexemeList[0].lineNumber
+
+                #return success
+                return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, True, True, False, None)
+
+            return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, True, True, False, None)
+
+    return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, False, False, False, None)
+
+# Function that checks grammar of omg_stmt
+# Returns Grammar Result
+def grammar_omg_stmt(lexemeList, runDefault):
+    global ResultText
+    global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("switch_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if(lexemeList[0].classification == "Conditional Delimiter End" or lexemeList[0].classification == "Conditional Switch Last"):
+        grammarOmgStmtEnd: GrammarResult = grammar_omg_stmt_end(lexemeList, runDefault)
+
+        if(if_grammar_has_error(grammarOmgStmtEnd) or if_grammar_matched(grammarOmgStmtEnd)): #if a syntax or symbol error occurred, or if successful
+            return grammarOmgStmtEnd
+
+    if(lexemeList[0].classification == "Conditional Switch"):
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        literalValue = None
+        grammarLiteralResult: GrammarResult = grammar_literal(lexemeList)
+        
+        #if grammar fit literal
+        if(if_grammar_has_error(grammarLiteralResult)): #if a syntax or symbol error occurred
+            return grammarLiteralResult
+
+        elif(if_grammar_matched(grammarLiteralResult)):
+            literalValue = grammarLiteralResult.value
+
+            #check if lexeme list is empty before checking for further matches
+            if(lexeme_list_is_empty(lexemeList)):
+                return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, True, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            if(lexemeList[0].classification == "New Line"):
+                lexemeList.pop(0)
+
+                #check if lexeme list is empty before checking for further matches
+                if(lexeme_list_is_empty(lexemeList)):
+                    return set_grammar("omg_stmt_end", ErrorLineNumber, lexemeList, True, False, False, None)
+                ErrorLineNumber = lexemeList[0].lineNumber
+
+                ifRunStmt = False
+                #check if identifier exists in symbol table
+                for symbolCounter in range(len(ListOfSymbols)):
+                    symbol = ListOfSymbols[symbolCounter]
+
+                    #set the value of the previous identifier
+                    if(symbol.identifier == "IT"):
+                        ifRunStmt = symbol.value == literalValue
+                        break
+
+                switchListOfLexeme = []
+                while(lexeme_list_is_empty(lexemeList) == False):
+                    if(lexemeList[0].classification == "Conditional Switch" or lexemeList[0].classification == "Conditional Switch Last" or lexemeList[0].classification == "Conditional Delimiter End" ): 
+                        break
+
+                    switchListOfLexeme.append(lexemeList[0])
+                    lexemeList.pop(0)
+                        
+                if(ifRunStmt):
+                    runDefault = False
+
+                    #check if grammar fit stmt
+                    grammarStmtResult: GrammarResult = grammar_stmt(switchListOfLexeme)
+
+                    if(if_grammar_has_error(grammarStmtResult)): #if a syntax or symbol error occurred, or if successful
+                        return grammarStmtResult
+
+                    lexemeList.clear() #recopy the modified list back to original list
+                    for item in switchListOfLexeme:
+                        lexemeList.append(item)
+
+                #check if grammar fit omg_stmt
+                grammarOmgStmtResult: GrammarResult = grammar_omg_stmt(lexemeList, runDefault)
+
+                if(if_grammar_has_error(grammarOmgStmtResult) or if_grammar_matched(grammarOmgStmtResult)): #if a syntax or symbol error occurred, or if successful
+                    return grammarOmgStmtResult
+
+    return set_grammar("omg_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+
+# Function that checks grammar of switch_stmt
+# Returns Grammar Result
+def grammar_switch_stmt(lexemeList):
+    global ResultText
+    global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("switch_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if(lexemeList[0].classification == "Conditional Delimiter Switch Start"):
+        lexemeList.pop(0)
+
+        #check if lexeme list is empty before checking for further matches
+        if(lexeme_list_is_empty(lexemeList)):
+            return set_grammar("switch_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+        ErrorLineNumber = lexemeList[0].lineNumber
+
+        if(lexemeList[0].classification == "New Line"):
+            lexemeList.pop(0)
+
+            #check if lexeme list is empty before checking for further matches
+            if(lexeme_list_is_empty(lexemeList)):
+                return set_grammar("switch_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+            ErrorLineNumber = lexemeList[0].lineNumber
+
+            if(lexemeList[0].classification == "Conditional Switch"):
+                lexemeList.pop(0)
+
+                #check if lexeme list is empty before checking for further matches
+                if(lexeme_list_is_empty(lexemeList)):
+                    return set_grammar("omg_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+                ErrorLineNumber = lexemeList[0].lineNumber
+
+                literalValue = None
+                grammarLiteralResult: GrammarResult = grammar_literal(lexemeList)
+                
+                #if grammar fit literal
+                if(if_grammar_has_error(grammarLiteralResult)): #if a syntax or symbol error occurred
+                    return grammarLiteralResult
+
+                elif(if_grammar_matched(grammarLiteralResult)):
+                    literalValue = grammarLiteralResult.value
+
+                    #check if lexeme list is empty before checking for further matches
+                    if(lexeme_list_is_empty(lexemeList)):
+                        return set_grammar("omg_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+                    ErrorLineNumber = lexemeList[0].lineNumber
+
+                    if(lexemeList[0].classification == "New Line"):
+                        lexemeList.pop(0)
+
+                        #check if lexeme list is empty before checking for further matches
+                        if(lexeme_list_is_empty(lexemeList)):
+                            return set_grammar("omg_stmt", ErrorLineNumber, lexemeList, True, False, False, None)
+                        ErrorLineNumber = lexemeList[0].lineNumber
+
+                        ifRunStmt = False
+                        #check if identifier exists in symbol table
+                        for symbolCounter in range(len(ListOfSymbols)):
+                            symbol = ListOfSymbols[symbolCounter]
+
+                            #set the value of the previous identifier
+                            if(symbol.identifier == "IT"):
+                                ifRunStmt = symbol.value == literalValue
+                                break
+
+                        switchListOfLexeme = []
+                        while(lexeme_list_is_empty(lexemeList) == False):
+                            if(lexemeList[0].classification == "Conditional Switch" or lexemeList[0].classification == "Conditional Switch Last" or lexemeList[0].classification == "Conditional Delimiter End" ): 
+                                break
+
+                            switchListOfLexeme.append(lexemeList[0])
+                            lexemeList.pop(0)
+
+                        #check if list has loop break operator, copy modified list to lexeme list
+                        ifEncounteredBreak = False
+                        for item in switchListOfLexeme:
+                            if(item.classification == "Loop Break Operator"):
+                                ifEncounteredBreak = True
+                                break
+                        
+                        runDefault = True
+                        if(ifRunStmt):
+                            runDefault = False
+                            #check if grammar fit stmt
+                            grammarStmtResult: GrammarResult = grammar_stmt(switchListOfLexeme)
+
+                            if(if_grammar_has_error(grammarStmtResult)): #if a syntax or symbol error occurred, or if successful
+                                return grammarStmtResult
+
+                        #check if grammar fit omg_stmt
+                        grammarOmgStmtResult: GrammarResult = grammar_omg_stmt(lexemeList, runDefault)
+
+                        if(if_grammar_has_error(grammarOmgStmtResult) or if_grammar_matched(grammarOmgStmtResult)): #if a syntax or symbol error occurred, or if successful
+                            return grammarOmgStmtResult
+
+    return set_grammar("switch_stmt", ErrorLineNumber, lexemeList, False, False, False, None)
 
     
 # Function that checks grammar of stmt2
@@ -1428,6 +1676,20 @@ def grammar_cond_stmt(lexemeList):
 def grammar_stmt2(lexemeList):
     global ResultText
     global ErrorLineNumber
+
+    #check if lexeme list is empty before checking for further matches
+    if(lexeme_list_is_empty(lexemeList)):
+        return set_grammar("stmt2", ErrorLineNumber, lexemeList, False, False, False, None)
+    ErrorLineNumber = lexemeList[0].lineNumber
+
+    if(lexemeList[0].classification == "Loop Break Operator"):
+        lexemeList.pop(0)
+
+        if(lexemeList[0].classification == "New Line"): #remove new line after loop break operator if any
+            lexemeList.pop(0)
+
+        #return success
+        return set_grammar("stmt2", ErrorLineNumber, lexemeList, True, True, False, None)
 
     #check if grammar fit input
     grammarInputResult: GrammarResult = grammar_input(lexemeList)
@@ -1449,6 +1711,12 @@ def grammar_stmt2(lexemeList):
         return grammarVariableAssignmentResult
 
     # else test other grammars
+
+    #check if grammar fit switch_stmt
+    grammarSwitchStmtResult: GrammarResult = grammar_switch_stmt(lexemeList)
+
+    if(if_grammar_has_error(grammarSwitchStmtResult) or if_grammar_matched(grammarSwitchStmtResult)): #if a syntax or symbol error occured, or if successful
+        return grammarSwitchStmtResult
 
     #check if grammar fit cond_stmt
     grammarCondStmtResult: GrammarResult = grammar_cond_stmt(lexemeList)
@@ -1493,11 +1761,8 @@ def grammar_stmt(lexemeList: list):
 
     # if(if_grammar_has_error(grammarStmt2Result) or if_grammar_matched(grammarStmt2Result)): #if it resulted in error
     #     return grammarStmt2Result
-    print('in2')
-    print_grammar_result(grammarStmt2Result)
 
     if(if_grammar_has_error(grammarStmt2Result)): #if it resulted in error
-        print('here...?')
         if(ResultText == ""):
             add_error_result_text(GrammarErrorStmt2NoAbstractionMatch, ErrorLineNumber)
 
